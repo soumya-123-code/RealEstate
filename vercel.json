@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "suretreaven.com"
+        }
+      ],
+      "destination": "https://www.suretreaven.com/$1",
+      "permanent": true
+    }
+  ]
+}
