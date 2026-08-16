@@ -29,7 +29,6 @@ export function sanitizeAppPath(raw, fallback = '/list') {
   // Legacy query param name
   link = link.replace(/([?&])type=/, '$1propertyType=');
 
-  // Known public destinations — anything else falls back (avoids soft 404s from CMS typos)
   const pathOnly = link.split('?')[0];
   const allowedExact = new Set([
     '/',
@@ -45,13 +44,17 @@ export function sanitizeAppPath(raw, fallback = '/list') {
     '/chat',
     '/profile',
   ]);
-  const allowedPrefixes = ['/property/', '/blog/', '/list'];
 
-  const isAllowed =
-    allowedExact.has(pathOnly) ||
-    allowedPrefixes.some((p) => pathOnly === p || pathOnly.startsWith(p));
+  // The property API and route both use an integer property ID.
+  const propertyPath = pathOnly.match(/^\/property\/(\d+)$/);
+  const blogPath = pathOnly.match(/^\/blog\/[^/]+$/);
 
-  if (!isAllowed) return fallback;
+  // Reject stale CMS links such as /property/undefined, /property/null,
+  // nested legacy property paths, and malformed blog URLs before navigation.
+  if (pathOnly.startsWith('/property/') && !propertyPath) return fallback;
+  if (pathOnly.startsWith('/blog/') && !blogPath) return fallback;
+
+  if (!allowedExact.has(pathOnly) && !propertyPath && !blogPath) return fallback;
   return link || fallback;
 }
 
