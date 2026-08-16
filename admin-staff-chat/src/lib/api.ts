@@ -1,8 +1,11 @@
 // ─── API Client for existing Express backend ─────────────────────
 import type { Chat, LoginResponse, Message } from "./types";
 
-// Configure this to point to your API server
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8800/api";
+// Prefer an explicit deployment URL. When the chat app is reverse-proxied
+// with the API, same-origin `/api` is a safe production fallback.
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined" ? `${window.location.origin}/api` : "http://localhost:8800/api");
 
 let authToken: string | null = null;
 
@@ -44,28 +47,21 @@ export function clearAuth() {
   }
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
   if (res.status === 401) {
     clearAuth();
     if (typeof window !== "undefined") {
-      window.location.href = "/login";
+      const destination = `${window.location.pathname}${window.location.search}`;
+      window.location.href = `/login?redirect=${encodeURIComponent(destination)}`;
     }
     throw new Error("Unauthorized");
   }
@@ -78,43 +74,32 @@ async function request<T>(
   return res.json();
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────
 export const authApi = {
   login: (identifier: string, otp?: string) =>
     request<LoginResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ identifier, otp }),
     }),
-
   verifyOtp: (email: string, otp: string) =>
     request<LoginResponse>("/auth/verify-otp", {
       method: "POST",
       body: JSON.stringify({ email, otp }),
     }),
-
-  me: () =>
-    request<{ user: LoginResponse["user"] }>("/auth/me"),
+  me: () => request<{ user: LoginResponse["user"] }>("/auth/me"),
 };
 
-// ─── Chat ─────────────────────────────────────────────────────────
 export const chatApi = {
   list: () => request<Chat[]>("/chats"),
-
   get: (chatId: number) => request<Chat & { messages: Message[] }>(`/chats/${chatId}`),
-
   create: (receiverId: number) =>
     request<Chat>("/chats", {
       method: "POST",
       body: JSON.stringify({ receiverId }),
     }),
-
   markRead: (chatId: number) =>
-    request<{ message: string }>(`/chats/read/${chatId}`, {
-      method: "PUT",
-    }),
+    request<{ message: string }>(`/chats/read/${chatId}`, { method: "PUT" }),
 };
 
-// ─── Messages ─────────────────────────────────────────────────────
 export const messageApi = {
   send: (chatId: number, text: string) =>
     request<Message>(`/messages/${chatId}`, {
@@ -123,10 +108,11 @@ export const messageApi = {
     }),
 };
 
-// ─── Users (for starting new conversations) ───────────────────────
 export const usersApi = {
   list: (role?: string) => {
-    const q = role ? `?role=${role}` : "";
-    return request<{ users: { id: number; username: string; email: string; avatar?: string; role: string }[] }>(`/users${q}`);
+    const q = role ? `?role=${encodeURIComponent(role)}` : "";
+    return request<{
+      users: { id: number; username: string; email: string; avatar?: string; role: string }[];
+    }>(`/users${q}`);
   },
 };
