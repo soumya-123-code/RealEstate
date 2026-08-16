@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint src/App.jsx src/components/Navbar/Navbar.jsx src/components/booking/BookingModal.jsx src/routes/homePage/HomePage.jsx src/routes/admin/AdminLayout.jsx src/routes/admin/AdminDashboard.jsx src/routes/admin/AdminAgents.jsx src/routes/agent/*.jsx --max-warnings 0",
+    "lint": "eslint src/App.jsx src/components/Navbar/Navbar.jsx src/components/booking/BookingModal.jsx src/routes/homePage/HomePage.jsx src/routes/admin/AdminLayout.jsx src/routes/admin/AdminDashboard.jsx src/routes/admin/AdminAgents.jsx src/routes/agent/AgentLayout.jsx src/routes/agent/AgentDashboard.jsx src/routes/agent/AgentProperties.jsx src/routes/agent/AgentBookings.jsx --max-warnings 0",
     "test:routing": "node scripts/check-routing.mjs",
     "preview": "vite preview"
   },
@@ -14,7 +14,7 @@
     "axios": "^1.6.7",
     "dompurify": "^3.0.9",
     "framer-motion": "^11.0.3",
-    "leaflet": "^1.9.4",
+    "leaflet": "^1.9.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
