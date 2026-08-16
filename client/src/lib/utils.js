@@ -1,3 +1,5 @@
+import { resolveAssetUrl } from './config';
+
 // Format price in Indian currency format
 export const formatPrice = (price) => {
   const numPrice = parseFloat(price);
@@ -117,19 +119,24 @@ export const truncateText = (text, maxLength) => {
   return text.substring(0, maxLength) + '...';
 };
 
-// Parse images
+// Parse images and resolve relative upload paths against the API host
 export const parseImages = (images) => {
-  if (!images) return [];
-  if (Array.isArray(images)) return images;
-  if (typeof images === 'string') {
+  let list = [];
+  if (!images) list = [];
+  else if (Array.isArray(images)) list = images;
+  else if (typeof images === 'string') {
     try {
-      return JSON.parse(images);
+      list = JSON.parse(images);
     } catch {
-      return [images];
+      list = [images];
     }
   }
-  return [];
+  if (!Array.isArray(list)) list = [];
+  return list.map((img) => resolveAssetUrl(img)).filter(Boolean);
 };
+
+/** Resolve a backend-relative media path (logo, avatar, upload). */
+export const mediaUrl = (path) => resolveAssetUrl(path);
 
 // Parse amenities/features
 export const parseJsonField = (field) => {

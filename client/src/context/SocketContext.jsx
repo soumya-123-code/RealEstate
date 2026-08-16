@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 import toast from "react-hot-toast";
+import { SOCKET_URL } from "../lib/config";
 import "../styles/chat-toast.scss";
 
 export const SocketContext = createContext();
@@ -88,8 +89,7 @@ export const SocketContextProvider = ({ children }) => {
   useEffect(() => {
     if (!currentUser?.id) return;
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin;
-    const sock = io(socketUrl, {
+    const sock = io(SOCKET_URL, {
       auth: { token: localStorage.getItem("token") },
       transports: ["websocket", "polling"],
       reconnection: true,

@@ -41,7 +41,11 @@ function Footer() {
           {/* About Section */}
           <div className="footer-section">
             <div className="footer-logo">
-              <BrandLogo name={companyName} tagline="Find · Book · Build · Belong" size="md" />
+              <BrandLogo
+                name={companyName}
+                tagline="Real Estate"
+                size="md"
+              />
             </div>
             <p className="footer-description">
               {companyInfo?.description || defaultDescription}

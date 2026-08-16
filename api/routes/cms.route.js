@@ -27,12 +27,27 @@ import {
   // Homepage
   getHomepageData,
 } from "../controllers/cms.controller.js";
-import { verifyToken, verifyAdmin } from "../middleware/verifyToken.js";
+import { verifyToken, verifyAdmin, requireManageCms } from "../middleware/verifyToken.js";
+import {
+  getPublicPage,
+  getAdminPages,
+  getAdminPage,
+  updateAdminPage,
+  createPageSection,
+  updatePageSection,
+  deletePageSection,
+  reorderPageSections,
+} from "../controllers/page.controller.js";
 
 const router = express.Router();
 
+// Panel access for all admin CMS routes; writes also require MANAGE_CMS (ADMIN always ok)
+const adminRead = [verifyToken, verifyAdmin];
+const adminWrite = [verifyToken, verifyAdmin, requireManageCms];
+
 // ============ PUBLIC ROUTES ============
 router.get("/homepage", getHomepageData);
+router.get("/pages/:key", getPublicPage);
 router.get("/banners", getHeroBanners);
 router.get("/services", getServices);
 router.get("/testimonials", getTestimonials);
@@ -48,72 +63,81 @@ router.post("/leads", createLead);
 
 // ============ ADMIN ROUTES ============
 
-// Analytics
-router.get("/admin/analytics", verifyToken, verifyAdmin, getAnalytics);
+router.get("/admin/analytics", ...adminRead, getAnalytics);
 
 // Hero Banners
-router.get("/admin/banners", verifyToken, verifyAdmin, getAllHeroBanners);
-router.post("/admin/banners", verifyToken, verifyAdmin, createHeroBanner);
-router.put("/admin/banners/:id", verifyToken, verifyAdmin, updateHeroBanner);
-router.patch("/admin/banners/:id", verifyToken, verifyAdmin, updateHeroBanner);
-router.delete("/admin/banners/:id", verifyToken, verifyAdmin, deleteHeroBanner);
+router.get("/admin/banners", ...adminRead, getAllHeroBanners);
+router.post("/admin/banners", ...adminWrite, createHeroBanner);
+router.put("/admin/banners/:id", ...adminWrite, updateHeroBanner);
+router.patch("/admin/banners/:id", ...adminWrite, updateHeroBanner);
+router.delete("/admin/banners/:id", ...adminWrite, deleteHeroBanner);
 
 // Services
-router.get("/admin/services", verifyToken, verifyAdmin, getAllServices);
-router.post("/admin/services", verifyToken, verifyAdmin, createService);
-router.put("/admin/services/:id", verifyToken, verifyAdmin, updateService);
-router.delete("/admin/services/:id", verifyToken, verifyAdmin, deleteService);
+router.get("/admin/services", ...adminRead, getAllServices);
+router.post("/admin/services", ...adminWrite, createService);
+router.put("/admin/services/:id", ...adminWrite, updateService);
+router.delete("/admin/services/:id", ...adminWrite, deleteService);
 
 // Testimonials
-router.get("/admin/testimonials", verifyToken, verifyAdmin, getAllTestimonials);
-router.post("/admin/testimonials", verifyToken, verifyAdmin, createTestimonial);
-router.put("/admin/testimonials/:id", verifyToken, verifyAdmin, updateTestimonial);
-router.delete("/admin/testimonials/:id", verifyToken, verifyAdmin, deleteTestimonial);
+router.get("/admin/testimonials", ...adminRead, getAllTestimonials);
+router.post("/admin/testimonials", ...adminWrite, createTestimonial);
+router.put("/admin/testimonials/:id", ...adminWrite, updateTestimonial);
+router.delete("/admin/testimonials/:id", ...adminWrite, deleteTestimonial);
 
 // FAQs
-router.get("/admin/faqs", verifyToken, verifyAdmin, getAllFaqs);
-router.post("/admin/faqs", verifyToken, verifyAdmin, createFaq);
-router.put("/admin/faqs/:id", verifyToken, verifyAdmin, updateFaq);
-router.delete("/admin/faqs/:id", verifyToken, verifyAdmin, deleteFaq);
+router.get("/admin/faqs", ...adminRead, getAllFaqs);
+router.post("/admin/faqs", ...adminWrite, createFaq);
+router.put("/admin/faqs/:id", ...adminWrite, updateFaq);
+router.delete("/admin/faqs/:id", ...adminWrite, deleteFaq);
 
 // Team Members
-router.get("/admin/team", verifyToken, verifyAdmin, getAllTeamMembers);
-router.post("/admin/team", verifyToken, verifyAdmin, createTeamMember);
-router.put("/admin/team/:id", verifyToken, verifyAdmin, updateTeamMember);
-router.delete("/admin/team/:id", verifyToken, verifyAdmin, deleteTeamMember);
+router.get("/admin/team", ...adminRead, getAllTeamMembers);
+router.post("/admin/team", ...adminWrite, createTeamMember);
+router.put("/admin/team/:id", ...adminWrite, updateTeamMember);
+router.delete("/admin/team/:id", ...adminWrite, deleteTeamMember);
 
 // Partners
-router.get("/admin/partners", verifyToken, verifyAdmin, getAllPartners);
-router.post("/admin/partners", verifyToken, verifyAdmin, createPartner);
-router.put("/admin/partners/:id", verifyToken, verifyAdmin, updatePartner);
-router.delete("/admin/partners/:id", verifyToken, verifyAdmin, deletePartner);
+router.get("/admin/partners", ...adminRead, getAllPartners);
+router.post("/admin/partners", ...adminWrite, createPartner);
+router.put("/admin/partners/:id", ...adminWrite, updatePartner);
+router.delete("/admin/partners/:id", ...adminWrite, deletePartner);
 
-// Blog Posts (Note: endpoint is /admin/blog for consistency)
-router.get("/admin/blogs", verifyToken, verifyAdmin, getAllBlogPosts);
-router.post("/admin/blogs", verifyToken, verifyAdmin, createBlogPost);
-router.put("/admin/blogs/:id", verifyToken, verifyAdmin, updateBlogPost);
-router.patch("/admin/blogs/:id", verifyToken, verifyAdmin, updateBlogPost);
-router.delete("/admin/blogs/:id", verifyToken, verifyAdmin, deleteBlogPost);
+// Blog Posts
+router.get("/admin/blogs", ...adminRead, getAllBlogPosts);
+router.post("/admin/blogs", ...adminWrite, createBlogPost);
+router.put("/admin/blogs/:id", ...adminWrite, updateBlogPost);
+router.patch("/admin/blogs/:id", ...adminWrite, updateBlogPost);
+router.delete("/admin/blogs/:id", ...adminWrite, deleteBlogPost);
 
 // Agents
-router.get("/admin/agents", verifyToken, verifyAdmin, getAllAgents);
-router.post("/admin/agents", verifyToken, verifyAdmin, createAgent);
-router.put("/admin/agents/:id", verifyToken, verifyAdmin, updateAgent);
-router.delete("/admin/agents/:id", verifyToken, verifyAdmin, deleteAgent);
+router.get("/admin/agents", ...adminRead, getAllAgents);
+router.post("/admin/agents", ...adminWrite, createAgent);
+router.put("/admin/agents/:id", ...adminWrite, updateAgent);
+router.delete("/admin/agents/:id", ...adminWrite, deleteAgent);
 
 // Leads
-router.get("/admin/leads", verifyToken, verifyAdmin, getLeads);
-router.put("/admin/leads/:id", verifyToken, verifyAdmin, updateLead);
-router.patch("/admin/leads/:id", verifyToken, verifyAdmin, updateLead);
-router.delete("/admin/leads/:id", verifyToken, verifyAdmin, deleteLead);
+router.get("/admin/leads", ...adminRead, getLeads);
+router.put("/admin/leads/:id", ...adminWrite, updateLead);
+router.patch("/admin/leads/:id", ...adminWrite, updateLead);
+router.delete("/admin/leads/:id", ...adminWrite, deleteLead);
 
 // Contact Requests
-router.get("/admin/contacts", verifyToken, verifyAdmin, getContactRequests);
-router.put("/admin/contacts/:id/read", verifyToken, verifyAdmin, markContactRequestRead);
-router.delete("/admin/contacts/:id", verifyToken, verifyAdmin, deleteContactRequest);
+router.get("/admin/contacts", ...adminRead, getContactRequests);
+router.put("/admin/contacts/:id/read", ...adminWrite, markContactRequestRead);
+router.delete("/admin/contacts/:id", ...adminWrite, deleteContactRequest);
 
 // SEO Settings
-router.get("/admin/seo", verifyToken, verifyAdmin, getSeoSettings);
-router.post("/admin/seo", verifyToken, verifyAdmin, upsertSeoSetting);
+router.get("/admin/seo", ...adminRead, getSeoSettings);
+router.post("/admin/seo", ...adminWrite, upsertSeoSetting);
+
+// Website Pages / Sections
+router.get("/admin/pages", ...adminRead, getAdminPages);
+router.get("/admin/pages/:key", ...adminRead, getAdminPage);
+router.put("/admin/pages/:key", ...adminWrite, updateAdminPage);
+router.post("/admin/pages/:key/sections", ...adminWrite, createPageSection);
+router.put("/admin/pages/:key/sections/reorder", ...adminWrite, reorderPageSections);
+router.put("/admin/sections/:sectionId", ...adminWrite, updatePageSection);
+router.patch("/admin/sections/:sectionId", ...adminWrite, updatePageSection);
+router.delete("/admin/sections/:sectionId", ...adminWrite, deletePageSection);
 
 export default router;

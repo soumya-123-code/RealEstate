@@ -6,8 +6,18 @@ import path from "path";
 const checkAdmin = async (userId) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: { role: true, permissions: true, canAccessAdminPanel: true },
   });
-  return user && user.role === "ADMIN";
+  if (!user) return false;
+  if (user.role === "ADMIN") return true;
+  if (user.role !== "STAFF") return false;
+  const permissions = Array.isArray(user.permissions) ? user.permissions : [];
+  return (
+    !!user.canAccessAdminPanel ||
+    permissions.includes("ADMIN_PANEL") ||
+    permissions.includes("MANAGE_CMS") ||
+    permissions.includes("*")
+  );
 };
 
 // Get company settings (Public)

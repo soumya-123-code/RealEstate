@@ -19,6 +19,14 @@ export const hasAdminPanelAccess = (user) => {
   return !!user.canAccessAdminPanel || permissions.includes('ADMIN_PANEL');
 };
 
+/** ADMIN always; STAFF needs MANAGE_CMS (or *). */
+export const canManageCms = (user) => {
+  if (!user) return false;
+  if (user.role === ROLES.ADMIN) return true;
+  const permissions = Array.isArray(user.permissions) ? user.permissions : [];
+  return permissions.includes('*') || permissions.includes('MANAGE_CMS');
+};
+
 /** Default post-login destination by role (single source of truth). */
 export const getRoleBasedRedirect = (user) => {
   if (!user?.role) return '/';

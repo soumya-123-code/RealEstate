@@ -1,0 +1,678 @@
+// Suretreaven admin CMS — classic navy / gold real-estate look
+$cms-navy: #17324d;
+$cms-navy-soft: #1f3f5c;
+$cms-gold: #c59a4a;
+$cms-gold-hover: #b3893d;
+$cms-cream: #f7f4ef;
+$cms-cream-deep: #efe9df;
+$cms-border: #e2d9cc;
+$cms-muted: #6b7a8c;
+$cms-danger: #a33b3b;
+$cms-danger-bg: #f8ecec;
+$cms-success: #2f6b4f;
+$cms-white: #ffffff;
+$cms-radius: 10px;
+$cms-shadow: 0 2px 12px rgba(23, 50, 77, 0.06);
+
+.cms-page {
+  --cms-navy: #{$cms-navy};
+  --cms-gold: #{$cms-gold};
+  padding: 4px 2px 32px;
+  color: $cms-navy;
+  min-height: 320px;
+}
+
+.cms-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $cms-border;
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: $cms-navy;
+  }
+
+  &__sub {
+    margin: 0;
+    font-size: 0.875rem;
+    color: $cms-muted;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+}
+
+.cms-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+  background: $cms-cream-deep;
+  color: $cms-navy;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: $cms-navy;
+    color: $cms-white;
+    border-color: $cms-navy;
+
+    &:hover:not(:disabled) {
+      background: $cms-navy-soft;
+    }
+  }
+
+  &--ghost {
+    background: $cms-white;
+    border-color: $cms-border;
+    color: $cms-navy;
+
+    &:hover:not(:disabled) {
+      background: $cms-cream;
+      border-color: darken($cms-border, 6%);
+    }
+  }
+
+  &--danger {
+    background: $cms-danger;
+    color: $cms-white;
+    border-color: $cms-danger;
+
+    &:hover:not(:disabled) {
+      background: darken($cms-danger, 6%);
+    }
+  }
+
+  &--gold {
+    background: $cms-gold;
+    color: $cms-white;
+    border-color: $cms-gold;
+
+    &:hover:not(:disabled) {
+      background: $cms-gold-hover;
+    }
+  }
+}
+
+.cms-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid $cms-border;
+  background: $cms-white;
+  color: $cms-navy;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: $cms-cream;
+    border-color: $cms-gold;
+    color: $cms-navy;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &.danger:hover:not(:disabled) {
+    background: $cms-danger-bg;
+    border-color: $cms-danger;
+    color: $cms-danger;
+  }
+}
+
+.cms-table-wrap {
+  overflow-x: auto;
+  background: $cms-white;
+  border: 1px solid $cms-border;
+  border-radius: $cms-radius;
+  box-shadow: $cms-shadow;
+}
+
+.cms-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid $cms-border;
+    vertical-align: middle;
+  }
+
+  th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $cms-muted;
+    font-weight: 700;
+    background: $cms-cream;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover td {
+    background: rgba(247, 244, 239, 0.65);
+  }
+
+  &__right {
+    text-align: right !important;
+  }
+}
+
+.cms-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  strong {
+    display: block;
+    font-weight: 650;
+    color: $cms-navy;
+  }
+}
+
+.cms-row-actions {
+  display: inline-flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.cms-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: $cms-cream-deep;
+  border: 1px solid $cms-border;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.cms-muted {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: $cms-muted;
+  font-weight: 400;
+}
+
+.cms-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid $cms-border;
+  background: $cms-cream;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: $cms-muted;
+
+  &.on {
+    background: rgba(47, 107, 79, 0.1);
+    border-color: rgba(47, 107, 79, 0.28);
+    color: $cms-success;
+  }
+
+  &.off {
+    background: $cms-cream-deep;
+    color: $cms-muted;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.cms-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 56px 24px;
+  text-align: center;
+  background: $cms-white;
+  border: 1px dashed $cms-border;
+  border-radius: $cms-radius;
+  color: $cms-muted;
+
+  p {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  &--error {
+    color: $cms-danger;
+    border-color: rgba(163, 59, 59, 0.35);
+    background: $cms-danger-bg;
+  }
+}
+
+.cms-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid $cms-cream-deep;
+  border-top-color: $cms-gold;
+  border-radius: 50%;
+  animation: cms-spin 0.7s linear infinite;
+}
+
+@keyframes cms-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cms-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(23, 50, 77, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.cms-modal {
+  width: min(560px, 100%);
+  max-height: min(90vh, 720px);
+  overflow: auto;
+  background: $cms-white;
+  border-radius: 12px;
+  border: 1px solid $cms-border;
+  box-shadow: 0 16px 48px rgba(23, 50, 77, 0.18);
+
+  &--sm {
+    width: min(400px, 100%);
+  }
+
+  &--lg {
+    width: min(680px, 100%);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid $cms-border;
+    background: $cms-cream;
+
+    h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: $cms-navy;
+    }
+  }
+
+  &__body {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 4px;
+  }
+}
+
+.cms-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: $cms-navy;
+  }
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1.5px solid $cms-border;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: $cms-navy;
+    background: $cms-white;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:focus {
+      outline: none;
+      border-color: $cms-gold;
+      box-shadow: 0 0 0 3px rgba(197, 154, 74, 0.18);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 88px;
+  }
+}
+
+.cms-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $cms-navy;
+  cursor: pointer;
+
+  input {
+    width: auto;
+  }
+}
+
+.cms-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  > input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1.5px solid $cms-border;
+    border-radius: 8px;
+    font-size: 0.875rem;
+  }
+}
+
+.cms-upload {
+  align-self: flex-start;
+  cursor: pointer;
+}
+
+.cms-image-preview {
+  width: 100%;
+  max-width: 220px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid $cms-border;
+  background: $cms-cream;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 140px;
+    object-fit: cover;
+  }
+}
+
+.cms-preview-note {
+  margin: 0;
+}
+
+// Page cards (AdminPages)
+.cms-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.cms-card {
+  background: $cms-white;
+  border: 1px solid $cms-border;
+  border-radius: $cms-radius;
+  padding: 18px;
+  box-shadow: $cms-shadow;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    border-color: rgba(197, 154, 74, 0.55);
+    box-shadow: 0 4px 18px rgba(23, 50, 77, 0.08);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: $cms-navy;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    font-size: 0.78rem;
+    color: $cms-muted;
+
+    code {
+      font-size: 0.75rem;
+      background: $cms-cream;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: $cms-navy;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+}
+
+// Section list (AdminPageEditor)
+.cms-section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cms-section-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  background: $cms-white;
+  border: 1px solid $cms-border;
+  border-radius: $cms-radius;
+  box-shadow: $cms-shadow;
+
+  &__order {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__info {
+    min-width: 0;
+
+    strong {
+      display: block;
+      font-size: 0.95rem;
+      color: $cms-navy;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+}
+
+.cms-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: $cms-cream-deep;
+  color: $cms-navy;
+  border: 1px solid $cms-border;
+
+  &--gold {
+    background: rgba(197, 154, 74, 0.15);
+    border-color: rgba(197, 154, 74, 0.4);
+    color: darken($cms-gold, 12%);
+  }
+}
+
+.cms-meta-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 18px;
+  background: $cms-white;
+  border: 1px solid $cms-border;
+  border-radius: $cms-radius;
+  box-shadow: $cms-shadow;
+
+  .cms-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .cms-meta-form__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+// Analytics
+.cms-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.cms-stat {
+  background: $cms-white;
+  border: 1px solid $cms-border;
+  border-radius: $cms-radius;
+  padding: 16px 18px;
+  box-shadow: $cms-shadow;
+  border-top: 3px solid $cms-gold;
+
+  &__value {
+    margin: 0 0 4px;
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: $cms-navy;
+    line-height: 1.1;
+  }
+
+  &__label {
+    margin: 0;
+    font-size: 0.78rem;
+    color: $cms-muted;
+    font-weight: 500;
+  }
+}
+
+.cms-panel {
+  background: $cms-white;
+  border: 1px solid $cms-border;
+  border-radius: $cms-radius;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: $cms-shadow;
+
+  &__title {
+    margin: 0 0 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $cms-navy;
+    padding-bottom: 10px;
+    border-bottom: 1px solid $cms-border;
+  }
+}
+
+.cms-select-inline {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid $cms-border;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  background: $cms-white;
+  color: $cms-navy;
+  max-width: 140px;
+}
+
+@media (max-width: 720px) {
+  .cms-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cms-meta-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cms-section-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cms-section-row__order {
+    flex-direction: row;
+  }
+
+  .cms-table th,
+  .cms-table td {
+    padding: 10px 10px;
+  }
+}

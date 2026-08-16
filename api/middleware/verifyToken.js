@@ -157,6 +157,29 @@ export const verifyAdmin = (req, res, next) => {
   });
 };
 
+/**
+ * After verifyToken/verifyAdmin: require a permission string.
+ * ADMIN always passes. STAFF needs the permission (or "*") in JWT claims.
+ */
+export const requirePermission = (...required) => (req, res, next) => {
+  if (!req.userId) {
+    return res.status(401).json({ message: "Not Authenticated!" });
+  }
+  if (req.userRole === "ADMIN" || req.isAdmin) {
+    return next();
+  }
+  const permissions = Array.isArray(req.permissions) ? req.permissions : [];
+  if (permissions.includes("*") || required.some((p) => permissions.includes(p))) {
+    return next();
+  }
+  return res.status(403).json({
+    message: "You don't have permission to manage website content.",
+  });
+};
+
+/** CMS write/manage gate — ADMIN or STAFF with MANAGE_CMS (or *). */
+export const requireManageCms = requirePermission("MANAGE_CMS");
+
 /** Alias matching common naming in docs / newer code. */
 export const requireAuth = verifyToken;
 export const authenticate = verifyToken;

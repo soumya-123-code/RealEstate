@@ -4,11 +4,10 @@ import {
   clearAuthStorage,
   getLoginPathForDestination,
 } from './auth';
-
-const apiBaseUrl = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+import { API_BASE_URL } from './config';
 
 const apiRequest = axios.create({
-  baseURL: apiBaseUrl,
+  baseURL: API_BASE_URL,
   withCredentials: true,
   timeout: 30000,
 });

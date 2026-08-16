@@ -4,6 +4,7 @@ import apiRequest from '../../lib/apiRequest';
 import Card from '../../components/Card/Card';
 import { PropertyListSkeleton } from '../../components/Skeleton/Skeleton';
 import { sanitizeAppPath } from '../../lib/sanitizeAppPath';
+import { mediaUrl } from '../../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiArrowRight,
@@ -223,7 +224,7 @@ function HomePage() {
               <div
                 className="hero-bg-image"
                 style={{
-                  backgroundImage: `url(${banners[activeBanner].image.startsWith('http') ? banners[activeBanner].image : `${window.location.origin}${banners[activeBanner].image}`})`,
+                  backgroundImage: `url(${mediaUrl(banners[activeBanner].image)})`,
                 }}
               />
             ) : (
@@ -571,7 +572,7 @@ function HomePage() {
                     <a href={partner.website} target="_blank" rel="noopener noreferrer">
                       {partner.logo ? (
                         <img
-                          src={partner.logo.startsWith('http') ? partner.logo : `${window.location.origin}${partner.logo}`}
+                          src={mediaUrl(partner.logo)}
                           alt={partner.name}
                           className="partner-logo"
                         />
@@ -583,7 +584,7 @@ function HomePage() {
                     <>
                       {partner.logo ? (
                         <img
-                          src={partner.logo.startsWith('http') ? partner.logo : `${window.location.origin}${partner.logo}`}
+                          src={mediaUrl(partner.logo)}
                           alt={partner.name}
                           className="partner-logo"
                         />
@@ -628,7 +629,7 @@ function HomePage() {
                     <div className="blog-image">
                       {post.coverImage ? (
                         <img
-                          src={post.coverImage.startsWith('http') ? post.coverImage : `${window.location.origin}${post.coverImage}`}
+                          src={mediaUrl(post.coverImage)}
                           alt={post.title}
                         />
                       ) : (

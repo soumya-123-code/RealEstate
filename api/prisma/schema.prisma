@@ -600,3 +600,44 @@ model SeoSetting {
   
   @@index([page])
 }
+
+// ========================================
+// WEBSITE PAGE / SECTION COMPOSITION (CMS)
+// Thin layout layer — content still lives in
+// HeroBanner, Service, Testimonial, etc.
+// ========================================
+
+model WebsitePage {
+  id          Int           @id @default(autoincrement())
+  key         String        @unique // home | about | properties | contact | faq | blog
+  title       String
+  description String?       @db.Text
+  path        String        // public URL path e.g. /
+  isPublished Boolean       @default(true)
+  sections    PageSection[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model PageSection {
+  id          Int         @id @default(autoincrement())
+  pageId      Int
+  page        WebsitePage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  key         String      // hero | featured | services | cta ...
+  type        String      // HERO | SEARCH | FEATURED_PROPERTIES | SERVICES | TESTIMONIALS | STATS | PARTNERS | TEAM | BLOG | FAQ | CTA | CUSTOM | COMPANY_INTRO | MISSION_VISION | CONTACT_INFO | PROPERTY_LIST
+  title       String?
+  subtitle    String?     @db.Text
+  content     String?     @db.Text
+  image       String?
+  buttonText  String?
+  buttonLink  String?
+  config      Json?
+  order       Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([pageId, key])
+  @@index([pageId, order])
+  @@index([isActive])
+}
