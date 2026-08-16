@@ -14,6 +14,7 @@ import prisma from "./lib/prisma.js";
 
 import authRoute from "./routes/auth.route.js";
 import adminRoute from "./routes/admin.route.js";
+import agentRoute from "./routes/agent.route.js";
 import propertyRoute from "./routes/property.route.js";
 import userRoute from "./routes/user.route.js";
 import companyRoute from "./routes/company.route.js";
@@ -30,29 +31,17 @@ const app = express();
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
 
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-  contentSecurityPolicy: false,
-}));
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" }, contentSecurityPolicy: false }));
 app.use(compression());
 
 const ALLOWED_ORIGINS = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:3001",
-  process.env.CLIENT_URL,
-  process.env.CHAT_APP_URL,
+  "http://localhost:5173", "http://localhost:3000", "http://localhost:3001",
+  "http://127.0.0.1:5173", "http://127.0.0.1:3000", "http://127.0.0.1:3001",
+  process.env.CLIENT_URL, process.env.CHAT_APP_URL,
 ].filter(Boolean);
 
 const io = new Server(httpServer, {
-  cors: {
-    origin: ALLOWED_ORIGINS,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  },
+  cors: { origin: ALLOWED_ORIGINS, credentials: true, methods: ["GET", "POST", "PUT", "DELETE", "PATCH"] },
   pingTimeout: 60000,
   pingInterval: 25000,
   connectTimeout: 10000,
@@ -72,7 +61,6 @@ io.use((socket, next) => {
   }
 });
 
-// userId -> Set<socketId>, so multiple tabs/devices stay online correctly.
 const onlineUsers = new Map();
 const addUser = (userId, socketId) => {
   const uid = String(userId);
@@ -88,54 +76,29 @@ const removeUser = (socketId) => {
   }
 };
 const getSocketIds = (userId) => [...(onlineUsers.get(String(userId)) || [])];
-const emitToUser = (userId, event, payload) => {
-  for (const socketId of getSocketIds(userId)) io.to(socketId).emit(event, payload);
-};
+const emitToUser = (userId, event, payload) => getSocketIds(userId).forEach((id) => io.to(id).emit(event, payload));
 const getOnlineUserIds = () => [...onlineUsers.keys()];
 
 const isValidChatParticipant = async (chatId, senderId, receiverId) => {
   const chat = await prisma.chat.findFirst({
-    where: {
-      id: chatId,
-      AND: [
-        { participants: { some: { userId: senderId } } },
-        { participants: { some: { userId: receiverId } } },
-      ],
-    },
+    where: { id: chatId, AND: [{ participants: { some: { userId: senderId } } }, { participants: { some: { userId: receiverId } } }] },
     select: { id: true },
   });
   return Boolean(chat);
 };
 
 io.on("connection", (socket) => {
-  console.log("[Socket] Connected:", socket.id);
+  socket.on("newUser", () => { addUser(socket.userId, socket.id); io.emit("getOnlineUsers", getOnlineUserIds()); });
 
-  socket.on("newUser", () => {
-    addUser(socket.userId, socket.id);
-    io.emit("getOnlineUsers", getOnlineUserIds());
-  });
-
-  // Live delivery only. Persistence remains the authenticated REST endpoint.
   socket.on("sendMessage", async (payload = {}) => {
     const receiverId = Number(payload.receiverId);
     const chatId = Number(payload.chatId);
     const senderId = Number(socket.userId);
-    if (![receiverId, chatId, senderId].every(Number.isInteger)) {
-      return socket.emit("chat:error", { message: "Invalid chat message payload." });
-    }
-
+    if (![receiverId, chatId, senderId].every(Number.isInteger)) return socket.emit("chat:error", { message: "Invalid chat message payload." });
     try {
-      if (!(await isValidChatParticipant(chatId, senderId, receiverId))) {
-        return socket.emit("chat:error", { message: "Conversation access denied." });
-      }
-
+      if (!(await isValidChatParticipant(chatId, senderId, receiverId))) return socket.emit("chat:error", { message: "Conversation access denied." });
       const data = payload.data || payload;
-      emitToUser(receiverId, "getMessage", {
-        ...data,
-        chatId,
-        userId: senderId,
-        senderName: data.senderName || "User",
-      });
+      emitToUser(receiverId, "getMessage", { ...data, chatId, userId: senderId, senderName: data.senderName || "User" });
     } catch (error) {
       console.error("[Socket] Message validation failed:", error.message);
       socket.emit("chat:error", { message: "Unable to deliver the message in real time." });
@@ -143,21 +106,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("typing", async ({ receiverId, chatId, isTyping, senderName } = {}) => {
-    const receiver = Number(receiverId);
-    const chat = Number(chatId);
-    const sender = Number(socket.userId);
+    const receiver = Number(receiverId), chat = Number(chatId), sender = Number(socket.userId);
     if (![receiver, chat, sender].every(Number.isInteger)) return;
     try {
       if (!(await isValidChatParticipant(chat, sender, receiver))) return;
-      emitToUser(receiver, "userTyping", {
-        chatId: chat,
-        senderId: String(sender),
-        senderName: senderName || "User",
-        isTyping: Boolean(isTyping),
-      });
-    } catch (error) {
-      console.error("[Socket] Typing validation failed:", error.message);
-    }
+      emitToUser(receiver, "userTyping", { chatId: chat, senderId: String(sender), senderName: senderName || "User", isTyping: Boolean(isTyping) });
+    } catch (error) { console.error("[Socket] Typing validation failed:", error.message); }
   });
 
   socket.on("propertyInquiry", (data) => io.emit("newInquiry", data));
@@ -167,73 +121,23 @@ io.on("connection", (socket) => {
     const targetUserId = String(data.targetUserId || "");
     const chatId = Number(data.chatId);
     if (!targetUserId) return;
-    if (Number.isInteger(chatId) && !(await isValidChatParticipant(chatId, Number(socket.userId), Number(targetUserId)))) {
-      return socket.emit("call-user-denied", { targetUserId });
-    }
-
-    if (!getSocketIds(targetUserId).length) {
-      return socket.emit("call-user-offline", { targetUserId });
-    }
-
-    emitToUser(targetUserId, "incoming-call", {
-      callerId: socket.userId,
-      callerSocketId: socket.id,
-      callerName: data.callerName || "Unknown",
-      callerAvatar: data.callerAvatar || null,
-      offer: data.offer,
-      callType: data.callType || "audio",
-      chatId: data.chatId,
-    });
+    if (Number.isInteger(chatId) && !(await isValidChatParticipant(chatId, Number(socket.userId), Number(targetUserId)))) return socket.emit("call-user-denied", { targetUserId });
+    if (!getSocketIds(targetUserId).length) return socket.emit("call-user-offline", { targetUserId });
+    emitToUser(targetUserId, "incoming-call", { callerId: socket.userId, callerSocketId: socket.id, callerName: data.callerName || "Unknown", callerAvatar: data.callerAvatar || null, offer: data.offer, callType: data.callType || "audio", chatId: data.chatId });
   });
-
-  socket.on("call-answer", ({ targetUserId, answer } = {}) => {
-    if (!targetUserId || !getSocketIds(targetUserId).length) return;
-    emitToUser(targetUserId, "call-answer", { answererId: socket.userId, answer });
-  });
-
-  socket.on("call-ice-candidate", ({ targetUserId, candidate } = {}) => {
-    if (!targetUserId || !getSocketIds(targetUserId).length) return;
-    emitToUser(targetUserId, "call-ice-candidate", { fromUserId: socket.userId, candidate });
-  });
-
-  socket.on("call-reject", ({ targetUserId } = {}) => {
-    if (!targetUserId) return;
-    emitToUser(targetUserId, "call-rejected", { rejectedBy: socket.userId });
-  });
+  socket.on("call-answer", ({ targetUserId, answer } = {}) => { if (targetUserId) emitToUser(targetUserId, "call-answer", { answererId: socket.userId, answer }); });
+  socket.on("call-ice-candidate", ({ targetUserId, candidate } = {}) => { if (targetUserId) emitToUser(targetUserId, "call-ice-candidate", { fromUserId: socket.userId, candidate }); });
+  socket.on("call-reject", ({ targetUserId } = {}) => { if (targetUserId) emitToUser(targetUserId, "call-rejected", { rejectedBy: socket.userId }); });
 
   socket.on("call-end", async (data = {}) => {
     const targetUserId = String(data.targetUserId || "");
-    if (targetUserId) {
-      emitToUser(targetUserId, "call-ended", {
-        endedBy: socket.userId,
-        duration: Number(data.duration) || 0,
-      });
-    }
-
-    const chatId = Number(data.chatId);
-    const callerId = Number(data.callerId);
-    const receiverId = Number(data.receiverId);
-    const duration = Math.max(0, Number(data.duration) || 0);
-    const actorId = Number(socket.userId);
-    if (![chatId, callerId, receiverId, actorId].every(Number.isInteger)) return;
-    if (actorId !== callerId && actorId !== receiverId) return;
-
+    if (targetUserId) emitToUser(targetUserId, "call-ended", { endedBy: socket.userId, duration: Number(data.duration) || 0 });
+    const chatId = Number(data.chatId), callerId = Number(data.callerId), receiverId = Number(data.receiverId), duration = Math.max(0, Number(data.duration) || 0), actorId = Number(socket.userId);
+    if (![chatId, callerId, receiverId, actorId].every(Number.isInteger) || (actorId !== callerId && actorId !== receiverId)) return;
     try {
       if (!(await isValidChatParticipant(chatId, actorId, actorId === callerId ? receiverId : callerId))) return;
-      await prisma.callLog.create({
-        data: {
-          chatId,
-          callerId,
-          receiverId,
-          callType: data.callType || "audio",
-          status: duration > 0 ? "completed" : "missed",
-          duration,
-          endedAt: duration > 0 ? new Date() : null,
-        },
-      });
-    } catch (error) {
-      console.error("[Socket] Failed to log call:", error.message);
-    }
+      await prisma.callLog.create({ data: { chatId, callerId, receiverId, callType: data.callType || "audio", status: duration > 0 ? "completed" : "missed", duration, endedAt: duration > 0 ? new Date() : null } });
+    } catch (error) { console.error("[Socket] Failed to log call:", error.message); }
   });
 
   socket.on("disconnect", (reason) => {
@@ -245,12 +149,7 @@ io.on("connection", (socket) => {
 });
 
 app.set("io", io);
-app.use(cors({
-  origin: ALLOWED_ORIGINS,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true, methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], allowedHeaders: ["Content-Type", "Authorization"] }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
@@ -260,6 +159,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoute);
 app.use("/api/admin", adminRoute);
+app.use("/api/agent", agentRoute);
 app.use("/api/properties", propertyRoute);
 app.use("/api/users", userRoute);
 app.use("/api/company", companyRoute);
@@ -270,12 +170,7 @@ app.use("/api/calls", callRoute);
 app.use("/api/cms", cmsRoute);
 
 app.get("/", (req, res) => res.json({ message: "Suretreaven API with Socket.IO", version: "2.0.0", status: "ok" }));
-app.get("/api/health", (req, res) => res.json({
-  status: "ok",
-  onlineUsersCount: onlineUsers.size,
-  uptime: process.uptime(),
-  timestamp: new Date().toISOString(),
-}));
+app.get("/api/health", (req, res) => res.json({ status: "ok", onlineUsersCount: onlineUsers.size, uptime: process.uptime(), timestamp: new Date().toISOString() }));
 
 app.use((err, req, res, next) => {
   console.error("Global error:", err);
@@ -287,13 +182,10 @@ app.use((err, req, res, next) => {
   const message = process.env.NODE_ENV === "production" ? "Internal server error" : err.message || "Something went wrong!";
   return res.status(statusCode).json({ message });
 });
-
 app.use((req, res) => res.status(404).json({ error: "Not Found", message: "The requested resource was not found" }));
 
 const PORT = process.env.PORT || 8800;
-httpServer.listen(PORT, () => {
-  console.log(`Suretreaven API listening on ${PORT} (${process.env.NODE_ENV || "development"})`);
-});
+httpServer.listen(PORT, () => console.log(`Suretreaven API listening on ${PORT} (${process.env.NODE_ENV || "development"})`));
 
 export default app;
 export { io };
