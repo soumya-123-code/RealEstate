@@ -25,7 +25,6 @@ const MyBookings = lazy(() => import('./routes/MyBookings'));
 const Register = lazy(() => import('./routes/register/Register'));
 const NotFound = lazy(() => import('./routes/notFound/NotFound'));
 const UserChat = lazy(() => import('./routes/userChat/UserChat'));
-
 const AdminLayout = lazy(() => import('./routes/admin/AdminLayout'));
 const AdminDashboard = lazy(() => import('./routes/admin/AdminDashboard'));
 const AdminProperties = lazy(() => import('./routes/admin/AdminProperties'));
@@ -36,7 +35,6 @@ const AdminUsers = lazy(() => import('./routes/admin/AdminUsers'));
 const AdminAgents = lazy(() => import('./routes/admin/AdminAgents'));
 const AdminChat = lazy(() => import('./routes/admin/AdminChat'));
 const AdminSettings = lazy(() => import('./routes/admin/AdminSettings'));
-
 const AgentLayout = lazy(() => import('./routes/agent/AgentLayout'));
 const AgentDashboard = lazy(() => import('./routes/agent/AgentDashboard'));
 const AgentProperties = lazy(() => import('./routes/agent/AgentProperties'));
@@ -46,29 +44,21 @@ const PageLoader = () => <AuthLoadingScreen message="Loading…" />;
 const ws = (Component) => <Suspense fallback={<PageLoader />}><Component /></Suspense>;
 const guest = (Component) => <GuestOnlyRoute>{ws(Component)}</GuestOnlyRoute>;
 const auth = (Component) => <ProtectedRoute>{ws(Component)}</ProtectedRoute>;
-const adminPanel = (Component) => (
-  <RoleGuard allowRoles={[ROLES.ADMIN, ROLES.STAFF]} requireAdminPanel loginPath="/admin/login">
-    {ws(Component)}
-  </RoleGuard>
-);
-const agentPortal = (Component) => (
-  <RoleGuard allowRoles={[ROLES.AGENT]} loginPath="/agent/login">{ws(Component)}</RoleGuard>
-);
+const adminPanel = (Component) => <RoleGuard allowRoles={[ROLES.ADMIN, ROLES.STAFF]} requireAdminPanel loginPath="/admin/login">{ws(Component)}</RoleGuard>;
+const agentPortal = (Component) => <RoleGuard allowRoles={[ROLES.AGENT]} loginPath="/agent/login">{ws(Component)}</RoleGuard>;
 
-function PropertiesAliasRedirect() {
-  return <Navigate to={sanitizeAppPath('/properties', '/list')} replace />;
-}
+function PropertiesAliasRedirect() { return <Navigate to={sanitizeAppPath('/properties', '/list')} replace />; }
 
 function App() {
   const router = createBrowserRouter([
     {
-      path: '/',
-      element: <Layout />,
-      errorElement: ws(NotFound),
+      path: '/', element: <Layout />, errorElement: ws(NotFound),
       children: [
         { index: true, element: <HomePage /> },
         { path: 'list', element: ws(ListPage) },
         { path: 'properties', element: <PropertiesAliasRedirect /> },
+        { path: 'explore', element: <Navigate to="/list" replace /> },
+        { path: 'contact', element: <Navigate to="/chat" replace /> },
         { path: 'property/:id', element: ws(SinglePage) },
         { path: 'profile', element: auth(ProfilePage) },
         { path: 'profile/update', element: auth(ProfileUpdatePage) },
@@ -80,9 +70,7 @@ function App() {
     },
     { path: '/admin/login', element: guest(AdminLogin) },
     {
-      path: '/admin',
-      element: adminPanel(AdminLayout),
-      errorElement: ws(NotFound),
+      path: '/admin', element: adminPanel(AdminLayout), errorElement: ws(NotFound),
       children: [
         { index: true, element: ws(AdminDashboard) },
         { path: 'properties', element: ws(AdminProperties) },
@@ -97,9 +85,7 @@ function App() {
     },
     { path: '/agent/login', element: guest(AgentLogin) },
     {
-      path: '/agent',
-      element: agentPortal(AgentLayout),
-      errorElement: ws(NotFound),
+      path: '/agent', element: agentPortal(AgentLayout), errorElement: ws(NotFound),
       children: [
         { index: true, element: ws(AgentDashboard) },
         { path: 'properties', element: ws(AgentProperties) },
@@ -111,18 +97,7 @@ function App() {
     { path: '*', element: ws(NotFound) },
   ]);
 
-  return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <AuthContextProvider>
-          <SocketContextProvider>
-            <RouterProvider router={router} />
-            <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
-          </SocketContextProvider>
-        </AuthContextProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
-  );
+  return <ErrorBoundary><ThemeProvider><AuthContextProvider><SocketContextProvider><RouterProvider router={router} /><Toaster position="top-right" toastOptions={{ duration: 3500 }} /></SocketContextProvider></AuthContextProvider></ThemeProvider></ErrorBoundary>;
 }
 
 export default App;
