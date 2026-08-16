@@ -10,8 +10,8 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import { fileURLToPath } from "url";
 import { setupSwagger } from "./swagger.js";
+import prisma from "./lib/prisma.js";
 
-// Routes
 import authRoute from "./routes/auth.route.js";
 import adminRoute from "./routes/admin.route.js";
 import propertyRoute from "./routes/property.route.js";
@@ -22,33 +22,19 @@ import messageRoute from "./routes/message.route.js";
 import notificationRoute from "./routes/notification.route.js";
 import callRoute from "./routes/call.route.js";
 import cmsRoute from "./routes/cms.route.js";
-
-// Middleware
 import { apiLimiter } from "./middleware/rateLimiter.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
 app.set("trust proxy", 1);
 const httpServer = createServer(app);
 
-// ========================================
-// SECURITY & PERFORMANCE MIDDLEWARE
-// ========================================
-
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: false,
-  })
-);
-
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false,
+}));
 app.use(compression());
-
-// ========================================
-// SOCKET.IO SETUP
-// ========================================
 
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
@@ -71,260 +57,206 @@ const io = new Server(httpServer, {
   pingInterval: 25000,
   connectTimeout: 10000,
   maxHttpBufferSize: 1e6,
-  allowEIO3: true,
 });
 
 io.use((socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error("Authentication required"));
-
     const payload = jwt.verify(token, process.env.JWT_SECRET_KEY);
     socket.userId = String(payload.id);
     socket.userRole = payload.role;
-    next();
+    return next();
   } catch {
-    next(new Error("Invalid socket authentication"));
+    return next(new Error("Invalid socket authentication"));
   }
 });
 
-// userId (string) → socketId (string)
+// userId -> Set<socketId>, so multiple tabs/devices stay online correctly.
 const onlineUsers = new Map();
-
 const addUser = (userId, socketId) => {
-  onlineUsers.set(String(userId), socketId);
+  const uid = String(userId);
+  const sockets = onlineUsers.get(uid) || new Set();
+  sockets.add(socketId);
+  onlineUsers.set(uid, sockets);
 };
-
 const removeUser = (socketId) => {
-  for (const [userId, sockId] of onlineUsers.entries()) {
-    if (sockId === socketId) {
-      onlineUsers.delete(userId);
-      break;
-    }
+  for (const [uid, sockets] of onlineUsers) {
+    if (!sockets.delete(socketId)) continue;
+    if (sockets.size === 0) onlineUsers.delete(uid);
+    break;
   }
 };
+const getSocketIds = (userId) => [...(onlineUsers.get(String(userId)) || [])];
+const emitToUser = (userId, event, payload) => {
+  for (const socketId of getSocketIds(userId)) io.to(socketId).emit(event, payload);
+};
+const getOnlineUserIds = () => [...onlineUsers.keys()];
 
-const getSocketId = (userId) => onlineUsers.get(String(userId));
-
-const getOnlineUserIds = () => Array.from(onlineUsers.keys());
+const isValidChatParticipant = async (chatId, senderId, receiverId) => {
+  const chat = await prisma.chat.findFirst({
+    where: {
+      id: chatId,
+      AND: [
+        { participants: { some: { userId: senderId } } },
+        { participants: { some: { userId: receiverId } } },
+      ],
+    },
+    select: { id: true },
+  });
+  return Boolean(chat);
+};
 
 io.on("connection", (socket) => {
   console.log("[Socket] Connected:", socket.id);
 
-  // ── 1. Register user ────────────────────────────────────────────
   socket.on("newUser", () => {
-    const uid = String(socket.userId);
-    if (!uid) return;
-    addUser(uid, socket.id);
-    console.log(`[Socket] User online: ${uid} → ${socket.id} (total: ${onlineUsers.size})`);
+    addUser(socket.userId, socket.id);
     io.emit("getOnlineUsers", getOnlineUserIds());
   });
 
-  // ── 2. Chat messages ────────────────────────────────────────────
-  socket.on("sendMessage", (payload) => {
-    let receiverId, messageData;
-    if (payload.data) {
-      receiverId = payload.receiverId;
-      messageData = payload.data;
-    } else {
-      receiverId = payload.receiverId;
-      messageData = payload;
+  // Live delivery only. Persistence remains the authenticated REST endpoint.
+  socket.on("sendMessage", async (payload = {}) => {
+    const receiverId = Number(payload.receiverId);
+    const chatId = Number(payload.chatId);
+    const senderId = Number(socket.userId);
+    if (![receiverId, chatId, senderId].every(Number.isInteger)) {
+      return socket.emit("chat:error", { message: "Invalid chat message payload." });
     }
-    const receiverSocketId = getSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("getMessage", messageData);
-      console.log(`[Socket] Message → receiver ${receiverId}`);
-    } else {
-      console.log(`[Socket] Receiver ${receiverId} offline, saved to DB only`);
+
+    try {
+      if (!(await isValidChatParticipant(chatId, senderId, receiverId))) {
+        return socket.emit("chat:error", { message: "Conversation access denied." });
+      }
+
+      const data = payload.data || payload;
+      emitToUser(receiverId, "getMessage", {
+        ...data,
+        chatId,
+        userId: senderId,
+        senderName: data.senderName || "User",
+      });
+    } catch (error) {
+      console.error("[Socket] Message validation failed:", error.message);
+      socket.emit("chat:error", { message: "Unable to deliver the message in real time." });
     }
   });
 
-  // ── 3. Typing indicator ─────────────────────────────────────────
-  socket.on("typing", ({ receiverId, chatId, isTyping, senderName }) => {
-    const receiverSocketId = getSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("userTyping", {
-        chatId: Number(chatId),
-        senderId: socket.userId,
+  socket.on("typing", async ({ receiverId, chatId, isTyping, senderName } = {}) => {
+    const receiver = Number(receiverId);
+    const chat = Number(chatId);
+    const sender = Number(socket.userId);
+    if (![receiver, chat, sender].every(Number.isInteger)) return;
+    try {
+      if (!(await isValidChatParticipant(chat, sender, receiver))) return;
+      emitToUser(receiver, "userTyping", {
+        chatId: chat,
+        senderId: String(sender),
         senderName: senderName || "User",
         isTyping: Boolean(isTyping),
       });
+    } catch (error) {
+      console.error("[Socket] Typing validation failed:", error.message);
     }
   });
 
-  // ── 4. Property inquiry ─────────────────────────────────────────
-  socket.on("propertyInquiry", (data) => {
-    for (const [, socketId] of onlineUsers.entries()) {
-      io.to(socketId).emit("newInquiry", data);
+  socket.on("propertyInquiry", (data) => io.emit("newInquiry", data));
+  socket.on("statusChange", (data) => socket.broadcast.emit("userStatusChange", data));
+
+  socket.on("call-offer", async (data = {}) => {
+    const targetUserId = String(data.targetUserId || "");
+    const chatId = Number(data.chatId);
+    if (!targetUserId) return;
+    if (Number.isInteger(chatId) && !(await isValidChatParticipant(chatId, Number(socket.userId), Number(targetUserId)))) {
+      return socket.emit("call-user-denied", { targetUserId });
     }
-  });
 
-  // ── 5. Status change ────────────────────────────────────────────
-  socket.on("statusChange", (data) => {
-    socket.broadcast.emit("userStatusChange", data);
-  });
-
-  // ── WebRTC: Call Offer ──────────────────────────────────────────
-  // Frontend sends: { targetUserId, offer, callType, chatId, callerName, callerAvatar }
-  socket.on("call-offer", (data) => {
-    const { targetUserId, offer, callType, chatId, callerName, callerAvatar } = data;
-    const receiverSocketId = getSocketId(targetUserId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("incoming-call", {
-        callerId: socket.userId,
-        callerSocketId: socket.id,
-        callerName: callerName || "Unknown",
-        callerAvatar: callerAvatar || null,
-        offer,
-        callType: callType || "audio",
-        chatId,
-      });
-      console.log(`[Socket] Call offer: ${socket.userId} → ${targetUserId} (${callType})`);
-    } else {
-      console.log(`[Socket] Call target ${targetUserId} is offline`);
-      socket.emit("call-user-offline", { targetUserId });
+    if (!getSocketIds(targetUserId).length) {
+      return socket.emit("call-user-offline", { targetUserId });
     }
+
+    emitToUser(targetUserId, "incoming-call", {
+      callerId: socket.userId,
+      callerSocketId: socket.id,
+      callerName: data.callerName || "Unknown",
+      callerAvatar: data.callerAvatar || null,
+      offer: data.offer,
+      callType: data.callType || "audio",
+      chatId: data.chatId,
+    });
   });
 
-  // ── WebRTC: Call Answer ─────────────────────────────────────────
-  // Frontend sends: { targetUserId, answer }
-  socket.on("call-answer", (data) => {
-    const { targetUserId, answer } = data;
-    const targetSocketId = getSocketId(targetUserId);
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("call-answer", {
-        answererId: socket.userId,
-        answer,
-      });
-      console.log(`[Socket] Call answer: ${socket.userId} → ${targetUserId}`);
-    }
+  socket.on("call-answer", ({ targetUserId, answer } = {}) => {
+    if (!targetUserId || !getSocketIds(targetUserId).length) return;
+    emitToUser(targetUserId, "call-answer", { answererId: socket.userId, answer });
   });
 
-  // ── WebRTC: ICE Candidate ───────────────────────────────────────
-  // Frontend sends: { targetUserId, candidate }
-  socket.on("call-ice-candidate", (data) => {
-    const { targetUserId, candidate } = data;
-    const targetSocketId = getSocketId(targetUserId);
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("call-ice-candidate", {
-        fromUserId: socket.userId,
-        candidate,
-      });
-    }
+  socket.on("call-ice-candidate", ({ targetUserId, candidate } = {}) => {
+    if (!targetUserId || !getSocketIds(targetUserId).length) return;
+    emitToUser(targetUserId, "call-ice-candidate", { fromUserId: socket.userId, candidate });
   });
 
-  // ── WebRTC: Call Reject ─────────────────────────────────────────
-  // Frontend sends: { targetUserId }
-  socket.on("call-reject", (data) => {
-    const { targetUserId } = data;
-    const targetSocketId = getSocketId(targetUserId);
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("call-rejected", { rejectedBy: socket.userId });
-      console.log(`[Socket] Call rejected by ${socket.userId}`);
-    }
+  socket.on("call-reject", ({ targetUserId } = {}) => {
+    if (!targetUserId) return;
+    emitToUser(targetUserId, "call-rejected", { rejectedBy: socket.userId });
   });
 
-  // ── WebRTC: Call End ────────────────────────────────────────────
-  // Frontend sends: { targetUserId, chatId, callerId, receiverId, callType, duration }
-  socket.on("call-end", (data) => {
-    const { targetUserId, chatId, callerId, receiverId, callType, duration } = data;
-    const targetSocketId = getSocketId(targetUserId);
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("call-ended", {
+  socket.on("call-end", async (data = {}) => {
+    const targetUserId = String(data.targetUserId || "");
+    if (targetUserId) {
+      emitToUser(targetUserId, "call-ended", {
         endedBy: socket.userId,
-        duration: duration || 0,
+        duration: Number(data.duration) || 0,
       });
     }
-    console.log(`[Socket] Call ended by ${socket.userId}, duration: ${duration || 0}s`);
 
-    // Log call to DB
-    if (chatId && callerId && receiverId) {
-      import("./lib/prisma.js").then(async ({ default: prisma }) => {
-        try {
-          const actorId = Number(socket.userId);
-          const caller = Number(callerId);
-          const receiver = Number(receiverId);
-          if (![actorId, caller, receiver].every(Number.isInteger) || (actorId !== caller && actorId !== receiver)) {
-            return;
-          }
+    const chatId = Number(data.chatId);
+    const callerId = Number(data.callerId);
+    const receiverId = Number(data.receiverId);
+    const duration = Math.max(0, Number(data.duration) || 0);
+    const actorId = Number(socket.userId);
+    if (![chatId, callerId, receiverId, actorId].every(Number.isInteger)) return;
+    if (actorId !== callerId && actorId !== receiverId) return;
 
-          const chat = await prisma.chat.findFirst({
-            where: {
-              id: Number(chatId),
-              participants: {
-                some: { userId: actorId },
-              },
-            },
-            select: { id: true },
-          });
-          if (!chat) return;
-
-          await prisma.callLog.create({
-            data: {
-              chatId: Number(chatId),
-              callerId: caller,
-              receiverId: receiver,
-              callType: callType || "audio",
-              status: duration && duration > 0 ? "completed" : "missed",
-              duration: Math.max(0, Number(duration) || 0),
-              endedAt: duration && duration > 0 ? new Date() : null,
-            },
-          });
-          console.log("[Socket] Call log saved");
-        } catch (dbErr) {
-          console.error("[Socket] Failed to log call:", dbErr.message);
-        }
-      }).catch(() => {});
+    try {
+      if (!(await isValidChatParticipant(chatId, actorId, actorId === callerId ? receiverId : callerId))) return;
+      await prisma.callLog.create({
+        data: {
+          chatId,
+          callerId,
+          receiverId,
+          callType: data.callType || "audio",
+          status: duration > 0 ? "completed" : "missed",
+          duration,
+          endedAt: duration > 0 ? new Date() : null,
+        },
+      });
+    } catch (error) {
+      console.error("[Socket] Failed to log call:", error.message);
     }
   });
 
-  // ── Disconnect ──────────────────────────────────────────────────
   socket.on("disconnect", (reason) => {
-    console.log("[Socket] Disconnected:", socket.id, reason);
-    if (socket.userId) {
-      socket.broadcast.emit("call-user-disconnected", { userId: socket.userId });
-    }
     removeUser(socket.id);
+    socket.broadcast.emit("call-user-disconnected", { userId: socket.userId });
     io.emit("getOnlineUsers", getOnlineUserIds());
-  });
-
-  socket.on("error", (error) => {
-    console.error("[Socket] Error:", error);
+    console.log("[Socket] Disconnected:", socket.id, reason);
   });
 });
 
-// Make io accessible to routes
 app.set("io", io);
-
-// ========================================
-// CORS CONFIGURATION
-// ========================================
-
-app.use(
-  cors({
-    origin: ALLOWED_ORIGINS,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
-// ========================================
-// STANDARD MIDDLEWARE
-// ========================================
-
+app.use(cors({
+  origin: ALLOWED_ORIGINS,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
-
 setupSwagger(app);
-
 app.use("/api", apiLimiter);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// ========================================
-// API ROUTES
-// ========================================
 
 app.use("/api/auth", authRoute);
 app.use("/api/admin", adminRoute);
@@ -337,68 +269,30 @@ app.use("/api/notifications", notificationRoute);
 app.use("/api/calls", callRoute);
 app.use("/api/cms", cmsRoute);
 
-// ========================================
-// HEALTH CHECK
-// ========================================
-
-app.get("/", (req, res) => {
-  res.json({
-    message: "Suretreaven API with Socket.IO",
-    version: "2.0.0",
-    status: "ok",
-  });
-});
-
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    onlineUsersCount: onlineUsers.size,
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// ========================================
-// ERROR HANDLING
-// ========================================
+app.get("/", (req, res) => res.json({ message: "Suretreaven API with Socket.IO", version: "2.0.0", status: "ok" }));
+app.get("/api/health", (req, res) => res.json({
+  status: "ok",
+  onlineUsersCount: onlineUsers.size,
+  uptime: process.uptime(),
+  timestamp: new Date().toISOString(),
+}));
 
 app.use((err, req, res, next) => {
   console.error("Global error:", err);
-  if (err.code === "LIMIT_FILE_SIZE")
-    return res.status(400).json({ message: "File too large. Maximum size is 5MB." });
-  if (err.code === "LIMIT_UNEXPECTED_FILE")
-    return res.status(400).json({ message: "Unexpected file field." });
-  if (err.code === "P2002")
-    return res.status(400).json({ message: "A record with this data already exists." });
-  if (err.code === "P2025")
-    return res.status(404).json({ message: "Record not found." });
-
+  if (err.code === "LIMIT_FILE_SIZE") return res.status(400).json({ message: "File too large. Maximum size is 5MB." });
+  if (err.code === "LIMIT_UNEXPECTED_FILE") return res.status(400).json({ message: "Unexpected file field." });
+  if (err.code === "P2002") return res.status(400).json({ message: "A record with this data already exists." });
+  if (err.code === "P2025") return res.status(404).json({ message: "Record not found." });
   const statusCode = err.statusCode || 500;
-  const message =
-    process.env.NODE_ENV === "production"
-      ? "Internal server error"
-      : err.message || "Something went wrong!";
-  res.status(statusCode).json({ message });
+  const message = process.env.NODE_ENV === "production" ? "Internal server error" : err.message || "Something went wrong!";
+  return res.status(statusCode).json({ message });
 });
 
-app.use((req, res) => {
-  res.status(404).json({ error: "Not Found", message: "The requested resource was not found" });
-});
-
-// ========================================
-// START SERVER
-// ========================================
+app.use((req, res) => res.status(404).json({ error: "Not Found", message: "The requested resource was not found" }));
 
 const PORT = process.env.PORT || 8800;
-
 httpServer.listen(PORT, () => {
-  console.log("=".repeat(60));
-  console.log("  Suretreaven API Server");
-  console.log("=".repeat(60));
-  console.log(`  HTTP API:     http://localhost:${PORT}`);
-  console.log(`  Socket.IO:    ws://localhost:${PORT}`);
-  console.log(`  Environment:  ${process.env.NODE_ENV || "development"}`);
-  console.log("=".repeat(60));
+  console.log(`Suretreaven API listening on ${PORT} (${process.env.NODE_ENV || "development"})`);
 });
 
 export default app;
