@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint src/App.jsx src/components/Navbar/Navbar.jsx src/components/booking/BookingModal.jsx src/routes/homePage/HomePage.jsx src/routes/admin/AdminLayout.jsx src/routes/admin/AdminDashboard.jsx src/routes/admin/AdminAgents.jsx src/routes/agent --max-warnings 0",
+    "lint": "eslint src/App.jsx src/components/Navbar/Navbar.jsx src/components/booking/BookingModal.jsx src/routes/homePage/HomePage.jsx src/routes/admin/AdminLayout.jsx src/routes/admin/AdminDashboard.jsx src/routes/admin/AdminAgents.jsx src/routes/agent/*.jsx --max-warnings 0",
     "test:routing": "node scripts/check-routing.mjs",
     "preview": "vite preview"
   },
