@@ -2,6 +2,7 @@ import { Navigate, Outlet, NavLink, useNavigate, useLocation } from 'react-route
 import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { useSocket } from '../../context/SocketContext';
+import BrandLogo from '../../components/BrandLogo/BrandLogo';
 
 import {
   FiHome, FiGrid, FiBookmark, FiUsers, FiSettings, FiLogOut, FiEye,
@@ -142,21 +143,13 @@ function AdminLayout() {
 
         {/* Brand */}
         <div className="sidebar-brand">
-          <div className="brand-logo-wrap">
-            {companySettings?.companyLogo ? (
-              <img
-                src={`${window.location.origin}${companySettings.companyLogo}`}
-                alt={companySettings.companyName}
-                className="brand-logo-img"
-              />
-            ) : (
-              <div className="brand-logo-placeholder">🏠</div>
-            )}
-          </div>
-          <div className="brand-text">
-            <span className="brand-name">{companySettings?.companyName || 'Real Estate'}</span>
-            <span className="brand-tag">Admin Panel</span>
-          </div>
+          <BrandLogo
+            to="/admin"
+            name={companySettings?.companyName || 'Suretreaven'}
+            tagline="Admin"
+            size="sm"
+            inverted
+          />
         </div>
 
         {/* User card */}

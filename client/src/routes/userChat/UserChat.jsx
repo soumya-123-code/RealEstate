@@ -87,7 +87,7 @@ function NewChatModal({ onClose, onSelect }) {
 
   useEffect(() => {
     apiRequest.get('/users/admin')
-      .then(r => setUsers(r.data ? [r.data] : [])
+      .then(r => setUsers(r.data ? [r.data] : []))
       .catch(() => toast.error('Failed to load users'))
       .finally(() => setLoading(false));
   }, []);

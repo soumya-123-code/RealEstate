@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiFacebook, FiTwitter, FiInstagram, FiLinkedin, FiYoutube, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 import apiRequest from '../../lib/apiRequest';
+import BrandLogo from '../BrandLogo/BrandLogo';
 import './Footer.scss';
 
 function Footer() {
@@ -40,16 +41,7 @@ function Footer() {
           {/* About Section */}
           <div className="footer-section">
             <div className="footer-logo">
-              {companyInfo?.companyLogo ? (
-                <img
-                  src={`${window.location.origin}${companyInfo.companyLogo}`}
-                  alt={companyName}
-                  className="logo-image"
-                />
-              ) : (
-                <span className="logo-icon">🏠</span>
-              )}
-              <span className="logo-text">{companyName}</span>
+              <BrandLogo name={companyName} tagline="Find · Book · Build · Belong" size="md" />
             </div>
             <p className="footer-description">
               {companyInfo?.description || defaultDescription}

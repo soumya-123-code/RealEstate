@@ -3,9 +3,15 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSocket } from '../../context/SocketContext';
-import { FiMenu, FiX, FiSun, FiMoon, FiUser, FiLogOut, FiHome, FiList, FiInfo, FiMail, FiMap, FiChevronDown, FiBookOpen, FiHelpCircle, FiMessageCircle } from 'react-icons/fi';
+import {
+  FiX, FiSun, FiMoon, FiUser, FiLogOut, FiHome, FiList,
+  FiInfo, FiMail, FiMap, FiChevronDown, FiBookOpen, FiHelpCircle,
+  FiMessageCircle, FiCalendar, FiUsers, FiGrid,
+} from 'react-icons/fi';
 import NotificationBell from '../NotificationBell/NotificationBell';
+import BrandLogo from '../BrandLogo/BrandLogo';
 import apiRequest from '../../lib/apiRequest';
+import { ROLES, hasAdminPanelAccess } from '../../lib/auth';
 import './Navbar.scss';
 
 function Navbar() {
@@ -18,18 +24,18 @@ function Navbar() {
   const { totalUnread } = useSocket();
   const navigate = useNavigate();
   const location = useLocation();
-  const menuRef = useRef(null);
   const dropdownRef = useRef(null);
+
+  const companyName = companySettings?.companyName || 'Suretreaven';
+  const role = currentUser?.role;
 
   useEffect(() => {
     fetchCompanySettings();
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 16);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -40,27 +46,23 @@ function Navbar() {
         setActiveDropdown(false);
       }
     };
-
     if (menuOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     }
-
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
   }, [menuOpen]);
 
-  // Close menu on route change
   useEffect(() => {
     setMenuOpen(false);
     setActiveDropdown(false);
   }, [location.pathname]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -76,10 +78,8 @@ function Navbar() {
       const res = await apiRequest.get('/company/settings');
       setCompanySettings(res.data);
     } catch (error) {
-      setCompanySettings({
-        companyName: 'Suretreaven',
-        companyLogo: null,
-      });
+      console.error('Failed to load company settings:', error);
+      setCompanySettings((prev) => prev || { companyName: 'Suretreaven', companyLogo: null });
     }
   };
 
@@ -94,59 +94,92 @@ function Navbar() {
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-  return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div className="navbar-container">
-        {/* Logo */}
-        <Link to="/" className="navbar-logo" onClick={closeMenu}>
-          {companySettings?.companyLogo ? (
-            <img
-              src={`${window.location.origin}${companySettings.companyLogo}`}
-              alt={companySettings.companyName || 'Logo'}
-              className="logo-image"
-            />
-          ) : (
-            <div className="logo-icon-wrapper">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            </div>
-          )}
-          <span className="logo-text">
-            {companySettings?.companyName || 'Suretreaven'}
-          </span>
-        </Link>
+  /** Public marketing links — always available on the customer site. */
+  const publicLinks = [
+    { to: '/', label: 'Home', icon: FiHome },
+    { to: '/list', label: 'Properties', icon: FiList },
+    { to: '/explore', label: 'Explore', icon: FiMap },
+    { to: '/about', label: 'About', icon: FiInfo },
+    { to: '/contact', label: 'Contact', icon: FiMail },
+  ];
 
-        {/* Desktop Navigation */}
-        <div className="navbar-nav desktop-nav">
-          <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-            Home
-          </Link>
-          <Link to="/list" className={`nav-link ${isActive('/list') ? 'active' : ''}`}>
-            Properties
-          </Link>
-          <Link to="/explore" className={`nav-link ${isActive('/explore') ? 'active' : ''}`}>
-            Explore
-          </Link>
-          <Link to="/blog" className={`nav-link ${isActive('/blog') ? 'active' : ''}`}>
-            Blog
-          </Link>
-          <Link to="/faq" className={`nav-link ${isActive('/faq') ? 'active' : ''}`}>
-            FAQ
-          </Link>
-          <Link to="/about" className={`nav-link ${isActive('/about') ? 'active' : ''}`}>
-            About
-          </Link>
-          <Link to="/contact" className={`nav-link ${isActive('/contact') ? 'active' : ''}`}>
-            Contact
-          </Link>
-          {currentUser && (
-            <Link to="/chat" className={`nav-link nav-link--chat ${isActive('/chat') ? 'active' : ''}`} style={{ position: 'relative' }}>
-              <FiMessageCircle size={16} style={{ marginRight: 4 }} />
+  /** Extra public links shown on desktop when space allows / in mobile. */
+  const secondaryPublicLinks = [
+    { to: '/blog', label: 'Blog', icon: FiBookOpen },
+    { to: '/faq', label: 'FAQ', icon: FiHelpCircle },
+  ];
+
+  /** Role-specific account links (authenticated). */
+  const getRoleLinks = () => {
+    if (!currentUser) return [];
+
+    if (role === ROLES.ADMIN || hasAdminPanelAccess(currentUser)) {
+      return [
+        { to: '/admin', label: 'Dashboard', icon: FiGrid },
+        { to: '/admin/users', label: 'Users', icon: FiUsers },
+        { to: '/admin/properties', label: 'Properties', icon: FiList },
+        { to: '/admin/bookings', label: 'Bookings', icon: FiCalendar },
+        { to: '/profile', label: 'Profile', icon: FiUser },
+      ];
+    }
+
+    if (role === ROLES.AGENT) {
+      return [
+        { to: '/agent', label: 'Dashboard', icon: FiGrid },
+        { to: '/list', label: 'Properties', icon: FiList },
+        { to: '/bookings', label: 'Bookings', icon: FiCalendar },
+        { to: '/profile', label: 'Profile', icon: FiUser },
+      ];
+    }
+
+    // Customer (USER) and staff without admin panel
+    return [
+      { to: '/list', label: 'Properties', icon: FiList },
+      { to: '/bookings', label: 'My Bookings', icon: FiCalendar },
+      { to: '/chat', label: 'Chat', icon: FiMessageCircle, badge: totalUnread },
+      { to: '/profile', label: 'Profile', icon: FiUser },
+    ];
+  };
+
+  const roleLinks = getRoleLinks();
+  const desktopCenterLinks =
+    currentUser && (role === ROLES.ADMIN || role === ROLES.AGENT || hasAdminPanelAccess(currentUser))
+      ? roleLinks
+      : [...publicLinks, ...secondaryPublicLinks];
+
+  return (
+    <nav className={`navbar${scrolled ? ' scrolled' : ''}`} aria-label="Main">
+      <div className="navbar-container">
+        <BrandLogo
+          name={companyName}
+          tagline="Find · Book · Build · Belong"
+          onClick={closeMenu}
+        />
+
+        <div className="navbar-nav desktop-nav" role="navigation">
+          {desktopCenterLinks.map(({ to, label, badge }) => (
+            <Link
+              key={`${to}-${label}`}
+              to={to}
+              className={`nav-link${isActive(to) ? ' active' : ''}`}
+              aria-current={isActive(to) ? 'page' : undefined}
+            >
+              {label}
+              {badge > 0 && (
+                <span className="nav-chat-badge">{badge > 9 ? '9+' : badge}</span>
+              )}
+            </Link>
+          ))}
+          {currentUser && role === ROLES.USER && !desktopCenterLinks.some((l) => l.to === '/chat') && (
+            <Link
+              to="/chat"
+              className={`nav-link nav-link--chat${isActive('/chat') ? ' active' : ''}`}
+              aria-current={isActive('/chat') ? 'page' : undefined}
+            >
+              <FiMessageCircle size={15} aria-hidden="true" />
               Chat
               {totalUnread > 0 && (
                 <span className="nav-chat-badge">{totalUnread > 9 ? '9+' : totalUnread}</span>
@@ -155,9 +188,8 @@ function Navbar() {
           )}
         </div>
 
-        {/* Desktop Actions */}
         <div className="navbar-actions desktop-actions">
-          <button className="icon-btn theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+          <button type="button" className="icon-btn theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
             {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
           </button>
 
@@ -166,26 +198,37 @@ function Navbar() {
           {currentUser ? (
             <div className="user-menu-wrapper" ref={dropdownRef}>
               <button
+                type="button"
                 className="user-menu-trigger"
                 onClick={() => setActiveDropdown(!activeDropdown)}
+                aria-expanded={activeDropdown}
+                aria-haspopup="menu"
               >
                 <div className="user-avatar-sm">
                   {currentUser.avatar ? (
-                    <img src={currentUser.avatar} alt={currentUser.username} />
+                    <img src={currentUser.avatar} alt="" />
                   ) : (
                     currentUser.username?.charAt(0).toUpperCase()
                   )}
                 </div>
                 <span className="user-name">{currentUser.username}</span>
-                <FiChevronDown size={14} className={`chevron ${activeDropdown ? 'rotate' : ''}`} />
+                <FiChevronDown size={14} className={`chevron${activeDropdown ? ' rotate' : ''}`} />
               </button>
 
               {activeDropdown && (
-                <div className="user-dropdown">
-                  <Link to="/profile" className="dropdown-item" onClick={() => setActiveDropdown(false)}>
-                    <FiUser size={16} /> My Profile
-                  </Link>
-                  <button onClick={handleLogout} className="dropdown-item logout">
+                <div className="user-dropdown" role="menu">
+                  {roleLinks.map(({ to, label, icon: Icon }) => (
+                    <Link
+                      key={to + label}
+                      to={to}
+                      className="dropdown-item"
+                      role="menuitem"
+                      onClick={() => setActiveDropdown(false)}
+                    >
+                      <Icon size={16} /> {label}
+                    </Link>
+                  ))}
+                  <button type="button" onClick={handleLogout} className="dropdown-item logout" role="menuitem">
                     <FiLogOut size={16} /> Logout
                   </button>
                 </div>
@@ -199,83 +242,76 @@ function Navbar() {
           )}
         </div>
 
-        {/* Mobile Right Section */}
         <div className="mobile-actions">
           {currentUser && <NotificationBell />}
           <button
+            type="button"
             className="hamburger-btn"
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
           >
-            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`}></span>
-            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`}></span>
-            <span className={`hamburger-line ${menuOpen ? 'open' : ''}`}></span>
+            <span className={`hamburger-line${menuOpen ? ' open' : ''}`} />
+            <span className={`hamburger-line${menuOpen ? ' open' : ''}`} />
+            <span className={`hamburger-line${menuOpen ? ' open' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
       <div
-        className={`mobile-overlay ${menuOpen ? 'active' : ''}`}
+        className={`mobile-overlay${menuOpen ? ' active' : ''}`}
         onClick={closeMenu}
+        aria-hidden="true"
       />
 
-      {/* Mobile Menu Panel */}
-      <div className={`mobile-menu ${menuOpen ? 'open' : ''}`}>
+      <div className={`mobile-menu${menuOpen ? ' open' : ''}`} aria-hidden={!menuOpen}>
         <div className="mobile-menu-header">
-          <Link to="/" className="mobile-logo" onClick={closeMenu}>
-            {companySettings?.companyLogo ? (
-              <img src={`${window.location.origin}${companySettings.companyLogo}`} alt="Logo" className="logo-image" />
-            ) : (
-              <span className="logo-icon-sm">🏠</span>
-            )}
-            <span>{companySettings?.companyName || 'Suretreaven'}</span>
-          </Link>
-          <button className="close-btn" onClick={closeMenu} aria-label="Close menu">
-            <FiX size={24} />
+          <BrandLogo
+            name={companyName}
+            tagline="Find · Book · Build · Belong"
+            size="sm"
+            onClick={closeMenu}
+          />
+          <button type="button" className="close-btn" onClick={closeMenu} aria-label="Close menu">
+            <FiX size={22} />
           </button>
         </div>
 
         <div className="mobile-menu-body">
           <div className="mobile-nav-section">
-            <p className="section-label">Navigation</p>
-            <Link to="/" className={`mobile-nav-link ${isActive('/') ? 'active' : ''}`} onClick={closeMenu}>
-              <FiHome size={20} /> Home
-            </Link>
-            <Link to="/list" className={`mobile-nav-link ${isActive('/list') ? 'active' : ''}`} onClick={closeMenu}>
-              <FiList size={20} /> Properties
-            </Link>
-            <Link to="/explore" className={`mobile-nav-link ${isActive('/explore') ? 'active' : ''}`} onClick={closeMenu}>
-              <FiMap size={20} /> Explore
-            </Link>
-            <Link to="/blog" className={`mobile-nav-link ${isActive('/blog') ? 'active' : ''}`} onClick={closeMenu}>
-              <FiBookOpen size={20} /> Blog
-            </Link>
-            <Link to="/faq" className={`mobile-nav-link ${isActive('/faq') ? 'active' : ''}`} onClick={closeMenu}>
-              <FiHelpCircle size={20} /> FAQ
-            </Link>
-            <Link to="/about" className={`mobile-nav-link ${isActive('/about') ? 'active' : ''}`} onClick={closeMenu}>
-              <FiInfo size={20} /> About
-            </Link>
-            <Link to="/contact" className={`mobile-nav-link ${isActive('/contact') ? 'active' : ''}`} onClick={closeMenu}>
-              <FiMail size={20} /> Contact
-            </Link>
+            <p className="section-label">Explore</p>
+            {[...publicLinks, ...secondaryPublicLinks].map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`mobile-nav-link${isActive(to) ? ' active' : ''}`}
+                onClick={closeMenu}
+              >
+                <Icon size={18} /> {label}
+              </Link>
+            ))}
           </div>
 
           {currentUser ? (
             <div className="mobile-nav-section">
               <p className="section-label">Account</p>
-              <Link to="/profile" className="mobile-nav-link" onClick={closeMenu}>
-                <FiUser size={20} /> Profile
-              </Link>
-              <Link to="/chat" className="mobile-nav-link" onClick={closeMenu} style={{ position: 'relative' }}>
-                <FiMessageCircle size={20} /> Messages
-                {totalUnread > 0 && (
-                  <span className="nav-chat-badge" style={{ marginLeft: 6 }}>{totalUnread > 9 ? '9+' : totalUnread}</span>
-                )}
-              </Link>
-              <button className="mobile-nav-link logout" onClick={handleLogout}>
-                <FiLogOut size={20} /> Logout
+              {roleLinks.map(({ to, label, icon: Icon, badge }) => (
+                <Link
+                  key={to + label}
+                  to={to}
+                  className={`mobile-nav-link${isActive(to) ? ' active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  <Icon size={18} /> {label}
+                  {badge > 0 && (
+                    <span className="nav-chat-badge" style={{ marginLeft: 6 }}>
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
+              <button type="button" className="mobile-nav-link logout" onClick={handleLogout}>
+                <FiLogOut size={18} /> Logout
               </button>
             </div>
           ) : (
@@ -287,7 +323,7 @@ function Navbar() {
           )}
 
           <div className="mobile-menu-footer">
-            <button className="theme-toggle-btn" onClick={toggleTheme}>
+            <button type="button" className="theme-toggle-btn" onClick={toggleTheme}>
               {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
               <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
             </button>

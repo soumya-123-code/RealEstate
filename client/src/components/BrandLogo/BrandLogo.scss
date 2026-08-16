@@ -1,0 +1,226 @@
+.brand-logo {
+  --brand-navy: var(--primary, #17324d);
+  --brand-gold: var(--secondary, #c59a4a);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+  flex-shrink: 0;
+  min-width: 0;
+
+  &:hover {
+    color: inherit;
+
+    .brand-logo__mark {
+      transform: translateY(-1px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-gold);
+    outline-offset: 4px;
+  }
+
+  &__mark {
+    display: flex;
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+  }
+
+  &__s {
+    stroke: var(--brand-navy);
+  }
+
+  /* Rounded gold t */
+  &__t {
+    stroke: var(--brand-gold);
+  }
+
+  /* Home grown from the t crossbar */
+  &__home {
+    fill: var(--brand-gold);
+  }
+
+  &__window {
+    rect {
+      fill: #fff;
+    }
+
+    path {
+      stroke: var(--brand-navy);
+    }
+  }
+
+  &__divider {
+    width: 1px;
+    align-self: stretch;
+    min-height: 1.7em;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(23, 50, 77, 0.18) 30%,
+      rgba(197, 154, 74, 0.45) 50%,
+      rgba(23, 50, 77, 0.18) 70%,
+      transparent
+    );
+    flex-shrink: 0;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.16rem;
+    justify-content: center;
+  }
+
+  &__name {
+    font-family: var(--font-primary);
+    font-weight: 800;
+    letter-spacing: 0.045em;
+    line-height: 1;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    text-transform: uppercase;
+  }
+
+  &__name-lead {
+    color: var(--brand-navy);
+  }
+
+  &__name-tail {
+    color: var(--brand-gold);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &__a-home {
+    display: inline-flex;
+    align-items: center;
+    color: var(--brand-gold);
+    transform: translateY(-0.05em);
+  }
+
+  &__a-door {
+    fill: var(--brand-navy);
+  }
+
+  &__tagline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-primary);
+    font-size: 0.52rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brand-navy);
+    opacity: 0.68;
+  }
+
+  &__tagline-rule {
+    width: 10px;
+    height: 1px;
+    background: var(--brand-gold);
+    opacity: 0.75;
+    flex-shrink: 0;
+  }
+
+  &--sm {
+    gap: 0.45rem;
+
+    .brand-logo__mark {
+      width: 50px;
+      height: 36px;
+    }
+
+    .brand-logo__name {
+      font-size: 0.88rem;
+    }
+
+    .brand-logo__tagline {
+      font-size: 0.42rem;
+    }
+  }
+
+  &--md {
+    .brand-logo__mark {
+      width: 64px;
+      height: 46px;
+    }
+
+    .brand-logo__name {
+      font-size: 1.1rem;
+    }
+  }
+
+  &--lg {
+    gap: 0.8rem;
+
+    .brand-logo__mark {
+      width: 78px;
+      height: 56px;
+    }
+
+    .brand-logo__name {
+      font-size: 1.32rem;
+    }
+  }
+
+  &--inverted {
+    .brand-logo__s {
+      stroke: #fff;
+    }
+
+    .brand-logo__window rect {
+      fill: rgba(255, 255, 255, 0.95);
+    }
+
+    .brand-logo__window path,
+    .brand-logo__a-door {
+      stroke: var(--primary-dark, #10263a);
+      fill: var(--primary-dark, #10263a);
+    }
+
+    .brand-logo__divider {
+      background: linear-gradient(
+        180deg,
+        transparent,
+        rgba(255, 255, 255, 0.22) 30%,
+        rgba(197, 154, 74, 0.5) 50%,
+        rgba(255, 255, 255, 0.22) 70%,
+        transparent
+      );
+    }
+
+    .brand-logo__name-lead {
+      color: #fff;
+    }
+
+    .brand-logo__name-tail,
+    .brand-logo__a-home {
+      color: var(--secondary-light, #d7b56d);
+    }
+
+    .brand-logo__tagline {
+      color: rgba(255, 255, 255, 0.72);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 420px) {
+    &__tagline {
+      display: none;
+    }
+  }
+}

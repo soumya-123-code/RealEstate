@@ -54,25 +54,7 @@
     .footer-logo {
       display: flex;
       align-items: center;
-      gap: 12px;
       margin-bottom: 20px;
-      font-size: 24px;
-      font-weight: 700;
-
-      .logo-image {
-        width: 40px;
-        height: 40px;
-        object-fit: contain;
-        border-radius: 8px;
-      }
-
-      .logo-icon {
-        font-size: 32px;
-      }
-
-      .logo-text {
-        color: var(--text-primary);
-      }
     }
 
     .footer-description {

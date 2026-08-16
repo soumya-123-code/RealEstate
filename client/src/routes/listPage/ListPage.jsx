@@ -56,9 +56,33 @@ function ListPage() {
     fetchFilterOptions();
   }, []);
 
+  // Keep filters in sync with URL (hero CTAs, shared links, browser back/forward)
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      state: searchParams.get('state') || '',
+      city: searchParams.get('city') || '',
+      propertyType: searchParams.get('propertyType') || searchParams.get('type') || 'ALL',
+      saleType: searchParams.get('saleType') || 'ALL',
+      listingType: searchParams.get('listingType') || 'ALL',
+      minPrice: searchParams.get('minPrice') || '',
+      maxPrice: searchParams.get('maxPrice') || '',
+      bedroom: searchParams.get('bedroom') || '',
+      bathroom: searchParams.get('bathroom') || '',
+      minArea: searchParams.get('minArea') || '',
+      maxArea: searchParams.get('maxArea') || '',
+      furnishingStatus: searchParams.get('furnishingStatus') || 'ALL',
+      sort: searchParams.get('sort') || 'newest',
+      isFeatured: searchParams.get('isFeatured') || '',
+    }));
+    setCurrentPage(1);
+  }, [searchParams]);
+
   useEffect(() => {
     fetchProperties();
-  }, [currentPage, filters.sort]);
+    // Intentionally depend on page + URL — applyFilters updates the query string
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, searchParams]);
 
   const fetchFilterOptions = async () => {
     try {
@@ -114,8 +138,17 @@ function ListPage() {
   };
 
   const applyFilters = () => {
+    const params = {};
+    Object.entries(filters).forEach(([key, value]) => {
+      if (!value || value === 'ALL' || (key === 'sort' && value === 'newest') || key === 'status' || key === 'locality') {
+        if (key === 'sort' && value && value !== 'newest') params[key] = value;
+        return;
+      }
+      params[key] = value;
+    });
+    if (filters.locality) params.locality = filters.locality;
     setCurrentPage(1);
-    fetchProperties();
+    setSearchParams(params);
     setShowFilters(false);
   };
 

@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import apiRequest from '../../lib/apiRequest';
 import Card from '../../components/Card/Card';
 import { PropertyListSkeleton } from '../../components/Skeleton/Skeleton';
+import { sanitizeAppPath } from '../../lib/sanitizeAppPath';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiArrowRight,
@@ -19,10 +20,12 @@ import {
   FiGlobe,
   FiPhone,
   FiPlay,
+  FiSearch,
 } from 'react-icons/fi';
 import './HomePage.scss';
 
 function HomePage() {
+  const navigate = useNavigate();
   const [homeData, setHomeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeBanner, setActiveBanner] = useState(0);
@@ -33,12 +36,12 @@ function HomePage() {
   // Default fallback data
   const defaultBanners = [
     {
-      title: 'Discover Your Perfect Property in Odisha',
-      subtitle: 'Explore premium verified properties across Rourkela, Bhubaneswar, and all of Odisha with transparent pricing',
-      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1800&q=85',
+      title: "Find a place you'll be proud to call home.",
+      subtitle: 'Premium verified plots, homes, and commercial spaces across Odisha — guided by Suretreaven with clarity and care.',
+      image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85',
       buttonText: 'Explore Properties',
       buttonLink: '/list',
-      badge: 'Trusted Real Estate Platform',
+      badge: 'Trusted Real Estate',
     }
   ];
 
@@ -206,7 +209,7 @@ function HomePage() {
   return (
     <div className="homePage">
       {/* ===== HERO BANNER SECTION ===== */}
-      <section className="hero-section">
+      <section className="hero-section" aria-label="Featured properties">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeBanner}
@@ -214,7 +217,7 @@ function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.7 }}
           >
             {banners[activeBanner]?.image ? (
               <div
@@ -226,82 +229,105 @@ function HomePage() {
             ) : (
               <div className="hero-bg-gradient" />
             )}
-            <div className="hero-overlay" />
           </motion.div>
         </AnimatePresence>
+        <div className="hero-overlay" aria-hidden="true" />
 
         <div className="hero-content">
-          <motion.div
-            className="hero-kicker"
-            initial={{ opacity: 0, y: -12 }}
+          <motion.p
+            className="hero-brand"
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.45 }}
           >
-            <FiShield />
-            Verified homes across Odisha
-          </motion.div>
-
-          {banners[activeBanner]?.badge && (
-            <motion.span
-              className="hero-badge"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              {banners[activeBanner].badge}
-            </motion.span>
-          )}
+            {companyName}
+          </motion.p>
 
           <motion.h1
             key={`title-${activeBanner}`}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
           >
-            {banners[activeBanner]?.title || 'Find Your Dream Property'}
+            {banners[activeBanner]?.title || "Find a place you'll be proud to call home."}
           </motion.h1>
 
           <motion.p
             key={`subtitle-${activeBanner}`}
             className="hero-subtitle"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
           >
             {banners[activeBanner]?.subtitle || 'Explore premium verified properties across Odisha'}
           </motion.p>
 
           <motion.div
             className="hero-buttons"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <Link to={banners[activeBanner]?.buttonLink || '/list'} className="hero-btn primary">
+            <Link
+              to={sanitizeAppPath(banners[activeBanner]?.buttonLink, '/list')}
+              className="hero-btn primary"
+            >
               {banners[activeBanner]?.buttonText || 'Explore Properties'} <FiArrowRight />
             </Link>
             <Link to="/explore" className="hero-btn secondary">
-              Map View <FiMapPin />
+              <FiMapPin /> Map View
+            </Link>
+            <Link to="/contact" className="hero-btn ghost">
+              Contact Us
             </Link>
           </motion.div>
 
-          <motion.div
-            className="hero-proof"
-            initial={{ opacity: 0, y: 18 }}
+          <motion.form
+            className="hero-search"
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.65, duration: 0.6 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              const city = String(fd.get('city') || '').trim();
+              const propertyType = String(fd.get('propertyType') || '');
+              const params = new URLSearchParams();
+              if (city) params.set('city', city);
+              if (propertyType && propertyType !== 'ALL') params.set('propertyType', propertyType);
+              const qs = params.toString();
+              navigate(qs ? `/list?${qs}` : '/list');
+            }}
           >
-            <span>Legal checks</span>
-            <span>Transparent tokens</span>
-            <span>Local experts</span>
-          </motion.div>
+            <label className="hero-search__field">
+              <span>City</span>
+              <input name="city" type="search" placeholder="Rourkela, Bhubaneswar…" autoComplete="address-level2" />
+            </label>
+            <label className="hero-search__field">
+              <span>Type</span>
+              <select name="propertyType" defaultValue="ALL">
+                <option value="ALL">All types</option>
+                <option value="PLOT">Plot</option>
+                <option value="APARTMENT">Apartment</option>
+                <option value="HOUSE">House</option>
+                <option value="VILLA">Villa</option>
+                <option value="COMMERCIAL">Commercial</option>
+              </select>
+            </label>
+            <button type="submit" className="hero-search__submit">
+              <FiSearch /> Search
+            </button>
+          </motion.form>
 
-          {/* Banner indicators */}
           {banners.length > 1 && (
-            <div className="hero-indicators">
+            <div className="hero-indicators" role="tablist" aria-label="Hero slides">
               {banners.map((_, index) => (
                 <button
                   key={index}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeBanner === index}
+                  aria-label={`Show slide ${index + 1}`}
                   className={`indicator ${activeBanner === index ? 'active' : ''}`}
                   onClick={() => setActiveBanner(index)}
                 />
@@ -429,7 +455,7 @@ function HomePage() {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1, duration: 0.4 }}
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                  onClick={() => window.location.href = `/list?city=${encodeURIComponent(city.city)}`}
+                  onClick={() => navigate(`/list?city=${encodeURIComponent(city.city)}`)}
                 >
                   <div className="city-icon"><FiMapPin size={24} /></div>
                   <h3>{city.city}</h3>

@@ -24,6 +24,7 @@ import {
 } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import apiRequest from '../../lib/apiRequest';
+import BrandLogo from '../BrandLogo/BrandLogo';
 import './AdminSidebar.scss';
 
 function AdminSidebar() {
@@ -117,18 +118,13 @@ function AdminSidebar() {
 
       <div className={`admin-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
-          {companySettings?.companyLogo ? (
-            <img 
-              src={`${window.location.origin}${companySettings.companyLogo}`} 
-              alt={companySettings.companyName} 
-              className="company-logo"
-            />
-          ) : (
-            <div className="company-logo-placeholder">
-              {companySettings?.companyName?.charAt(0) || 'A'}
-            </div>
-          )}
-          <h3>{companySettings?.companyName || 'Admin Panel'}</h3>
+          <BrandLogo
+            to="/admin"
+            name={companySettings?.companyName || 'Suretreaven'}
+            tagline="Admin"
+            size="sm"
+            inverted
+          />
         </div>
 
         <div className="user-info">

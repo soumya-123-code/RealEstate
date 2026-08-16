@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthContextProvider } from './context/AuthContext';
 import { SocketContextProvider } from './context/SocketContext';
@@ -10,6 +10,14 @@ import RoleGuard from './components/auth/RoleGuard';
 import GuestOnlyRoute from './components/auth/GuestOnlyRoute';
 import AuthLoadingScreen from './components/auth/AuthLoadingScreen';
 import { ROLES } from './lib/auth';
+import { sanitizeAppPath } from './lib/sanitizeAppPath';
+
+/** Legacy CMS links used /properties — keep them working forever. */
+function PropertiesAliasRedirect() {
+  const location = useLocation();
+  const target = sanitizeAppPath(`/properties${location.search || ''}`, '/list');
+  return <Navigate to={target} replace />;
+}
 
 // Eager loaded
 import Layout from './routes/layout/Layout';
@@ -95,6 +103,8 @@ function App() {
       children: [
         { path: '/', element: <HomePage /> },
         { path: '/list', element: ws(ListPage) },
+        { path: '/properties', element: <PropertiesAliasRedirect /> },
+        { path: '/properties/*', element: <PropertiesAliasRedirect /> },
         { path: '/explore', element: ws(PropertiesListMapview) },
         { path: '/property/:id', element: ws(SinglePage) },
         { path: '/profile', element: auth(ProfilePage) },
