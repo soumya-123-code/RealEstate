@@ -171,7 +171,7 @@ function AdminCallUI({ callState, onEnd, localStreamRef, toggleMute, toggleCamer
         <div className="ac-call-controls-bar">
           <button className={`ac-ctrl ${muted ? 'ac-ctrl--on' : ''}`} onClick={() => { toggleMute(); setMuted(m=>!m); }}>{muted ? <FiMicOff size={18}/> : <FiMic size={18}/>}</button>
           {callState.type === 'video' && <button className={`ac-ctrl ${camOff ? 'ac-ctrl--on' : ''}`} onClick={() => { toggleCamera(); setCamOff(c=>!c); }}>{camOff ? <FiVideoOff size={18}/> : <FiVideo size={18}/>}</button>}
-          <button className="ac-ctrl ac-ctrl--end" onClick={onEnd}><FiPhoneOff size={18}/></button>
+          <button className="ac-ctrl ac-ctrl--end" onClick={() => onEnd(duration)}><FiPhoneOff size={18}/></button>
         </div>
       </div>
     </div>
@@ -216,12 +216,15 @@ export default function AdminChat() {
   }, [messages]);
 
   // ── load chat list ───────────────────────────────────────────────────────
+  const [chatsError, setChatsError] = useState(false);
   const loadChats = useCallback(async () => {
     try {
       const res = await apiRequest.get('/chats');
       setChats(res.data || []);
+      setChatsError(false);
     } catch (err) {
       console.error('loadChats:', err);
+      setChatsError(true);
     } finally {
       setLoadingChats(false);
     }
@@ -241,18 +244,18 @@ export default function AdminChat() {
       const cur = selectedChatRef.current;
 
       if (cur && Number(cur.id) === inChatId) {
-        // Append to open conversation
-        setMessages(prev => [
-          ...prev,
-          {
-            id       : data.id || `sock_${Date.now()}`,
+        // Append to open conversation — dedupe by id (socket echo vs saved row)
+        setMessages(prev => {
+          if (data.id != null && prev.some(m => m.id === data.id)) return prev;
+          return [...prev, {
+            id       : data.id ?? `sock_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
             text     : data.text,
             userId   : Number(data.userId),
             chatId   : inChatId,
             createdAt: data.createdAt || new Date().toISOString(),
             user     : { username: data.senderName, avatar: data.senderAvatar },
-          },
-        ]);
+          }];
+        });
         // Silently mark read
         apiRequest.put(`/chats/read/${inChatId}`).catch(() => {});
       }
@@ -429,7 +432,7 @@ export default function AdminChat() {
             <Avatar user={callState.remoteUser} size={64} />
             <h3>{callState.remoteUser?.username || 'User'}</h3>
             <p>Calling…</p>
-            <button className="ac-call-btn ac-call-btn--reject" onClick={endCall}><FiPhoneOff size={20} /></button>
+            <button className="ac-call-btn ac-call-btn--reject" onClick={() => endCall(0)}><FiPhoneOff size={20} /></button>
           </div>
         </div>
       )}
@@ -471,6 +474,14 @@ export default function AdminChat() {
           <div className="ac-sidebar__list">
             {loadingChats ? (
               <div className="ac-placeholder"><div className="ac-spinner" /></div>
+            ) : chatsError ? (
+              <div className="ac-placeholder ac-placeholder--empty">
+                <FiMessageCircle size={30} />
+                <p>Couldn&apos;t load conversations</p>
+                <button className="ac-start-btn" onClick={() => { setLoadingChats(true); loadChats(); }}>
+                  Try again
+                </button>
+              </div>
             ) : filteredChats.length === 0 ? (
               <div className="ac-placeholder ac-placeholder--empty">
                 <FiMessageCircle size={30} />

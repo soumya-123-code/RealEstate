@@ -20,6 +20,28 @@ export const SECTION_TYPES = [
 ];
 
 export const CMS_ENTITIES = {
+  navigation: {
+    title: 'Navigation',
+    subtitle: 'Header and footer links (auth links stay application-controlled)',
+    endpoint: '/cms/admin/navigation',
+    labelKey: 'label',
+    fields: [
+      { key: 'label', label: 'Label', type: 'text', required: true },
+      { key: 'url', label: 'URL', type: 'text', required: true, placeholder: '/about, /list, /contact…' },
+      {
+        key: 'location',
+        label: 'Location',
+        type: 'select',
+        options: [
+          { value: 'HEADER', label: 'Header (top menu)' },
+          { value: 'FOOTER', label: 'Footer (quick links)' },
+        ],
+        required: true,
+      },
+      { key: 'order', label: 'Order', type: 'number' },
+      { key: 'isActive', label: 'Active', type: 'boolean' },
+    ],
+  },
   banners: {
     title: 'Hero Banners',
     subtitle: 'Homepage and campaign banner slides',

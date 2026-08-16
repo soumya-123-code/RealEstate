@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthContextProvider } from './context/AuthContext';
 import { SocketContextProvider } from './context/SocketContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { SiteContextProvider } from './context/SiteContext';
 import ErrorBoundary from './components/errorBoundary/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleGuard from './components/auth/RoleGuard';
@@ -15,7 +16,9 @@ import { sanitizeAppPath } from './lib/sanitizeAppPath';
 /** Legacy CMS links used /properties — keep them working forever. */
 function PropertiesAliasRedirect() {
   const location = useLocation();
-  const target = sanitizeAppPath(`/properties${location.search || ''}`, '/list');
+  const rest = location.pathname.replace(/^\/properties\/?/, '');
+  const suffix = rest ? `/${rest}` : '';
+  const target = sanitizeAppPath(`/properties${suffix}${location.search || ''}`, '/list');
   return <Navigate to={target} replace />;
 }
 
@@ -40,6 +43,8 @@ const NotFound = lazy(() => import('./routes/notFound/NotFound'));
 const BlogListPage = lazy(() => import('./routes/blog/BlogListPage'));
 const BlogPostPage = lazy(() => import('./routes/blog/BlogPostPage'));
 const FaqPage = lazy(() => import('./routes/faq/FaqPage'));
+const PrivacyPage = lazy(() => import('./routes/legal/PrivacyPage'));
+const TermsPage = lazy(() => import('./routes/legal/TermsPage'));
 
 // Admin pages
 const AdminLayout = lazy(() => import('./routes/admin/AdminLayout'));
@@ -53,6 +58,23 @@ const AdminUsers = lazy(() => import('./routes/admin/AdminUsers'));
 const AdminStaff = lazy(() => import('./routes/admin/AdminStaff'));
 const AdminChat = lazy(() => import('./routes/admin/AdminChat'));
 const AdminSettings = lazy(() => import('./routes/admin/AdminSettings'));
+
+// CMS admin pages
+const AdminCmsAnalytics = lazy(() => import('./routes/admin/cms/AdminAnalytics'));
+const AdminCmsBanners = lazy(() => import('./routes/admin/cms/AdminBanners'));
+const AdminCmsBlogs = lazy(() => import('./routes/admin/cms/AdminBlogs'));
+const AdminCmsContacts = lazy(() => import('./routes/admin/cms/AdminContacts'));
+const AdminCmsFaqs = lazy(() => import('./routes/admin/cms/AdminFaqs'));
+const AdminCmsLeads = lazy(() => import('./routes/admin/cms/AdminLeads'));
+const AdminCmsPages = lazy(() => import('./routes/admin/cms/AdminPages'));
+const AdminCmsPageEditor = lazy(() => import('./routes/admin/cms/AdminPageEditor'));
+const AdminCmsPartners = lazy(() => import('./routes/admin/cms/AdminPartners'));
+const AdminCmsSeo = lazy(() => import('./routes/admin/cms/AdminSeo'));
+const AdminCmsServices = lazy(() => import('./routes/admin/cms/AdminServices'));
+const AdminCmsTeam = lazy(() => import('./routes/admin/cms/AdminTeam'));
+const AdminCmsTestimonials = lazy(() => import('./routes/admin/cms/AdminTestimonials'));
+const AdminCmsAgents = lazy(() => import('./routes/admin/cms/AdminAgents'));
+const AdminCmsNavigation = lazy(() => import('./routes/admin/cms/AdminNavigation'));
 
 // User Chat page
 const UserChat = lazy(() => import('./routes/userChat/UserChat'));
@@ -117,6 +139,8 @@ function App() {
         { path: '/blog', element: ws(BlogListPage) },
         { path: '/blog/:slug', element: ws(BlogPostPage) },
         { path: '/faq', element: ws(FaqPage) },
+        { path: '/privacy', element: ws(PrivacyPage) },
+        { path: '/terms', element: ws(TermsPage) },
         { path: '/chat', element: auth(UserChat) },
       ],
     },
@@ -137,6 +161,23 @@ function App() {
         { path: '/admin/staff', element: ws(AdminStaff) },
         { path: '/admin/chat', element: ws(AdminChat) },
         { path: '/admin/settings', element: ws(AdminSettings) },
+
+        // CMS management
+        { path: '/admin/cms/analytics', element: ws(AdminCmsAnalytics) },
+        { path: '/admin/cms/banners', element: ws(AdminCmsBanners) },
+        { path: '/admin/cms/blogs', element: ws(AdminCmsBlogs) },
+        { path: '/admin/cms/contacts', element: ws(AdminCmsContacts) },
+        { path: '/admin/cms/faqs', element: ws(AdminCmsFaqs) },
+        { path: '/admin/cms/leads', element: ws(AdminCmsLeads) },
+        { path: '/admin/cms/pages', element: ws(AdminCmsPages) },
+        { path: '/admin/cms/pages/:key', element: ws(AdminCmsPageEditor) },
+        { path: '/admin/cms/partners', element: ws(AdminCmsPartners) },
+        { path: '/admin/cms/seo', element: ws(AdminCmsSeo) },
+        { path: '/admin/cms/services', element: ws(AdminCmsServices) },
+        { path: '/admin/cms/team', element: ws(AdminCmsTeam) },
+        { path: '/admin/cms/testimonials', element: ws(AdminCmsTestimonials) },
+        { path: '/admin/cms/agents', element: ws(AdminCmsAgents) },
+        { path: '/admin/cms/navigation', element: ws(AdminCmsNavigation) },
       ],
     },
 
@@ -170,18 +211,20 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthContextProvider>
-          <SocketContextProvider>
-            <RouterProvider router={router} />
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 3500,
-                style: { background: '#1e2a45', color: '#fff', borderRadius: '12px', padding: '12px 18px' },
-                success: { iconTheme: { primary: '#4ade80', secondary: '#fff' } },
-                error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
-              }}
-            />
-          </SocketContextProvider>
+          <SiteContextProvider>
+            <SocketContextProvider>
+              <RouterProvider router={router} />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3500,
+                  style: { background: '#1e2a45', color: '#fff', borderRadius: '12px', padding: '12px 18px' },
+                  success: { iconTheme: { primary: '#4ade80', secondary: '#fff' } },
+                  error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+                }}
+              />
+            </SocketContextProvider>
+          </SiteContextProvider>
         </AuthContextProvider>
       </ThemeProvider>
     </ErrorBoundary>

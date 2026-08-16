@@ -1,38 +1,25 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiFacebook, FiTwitter, FiInstagram, FiLinkedin, FiYoutube, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
-import apiRequest from '../../lib/apiRequest';
+import { useSite } from '../../context/SiteContext';
+import { sanitizeAppPath } from '../../lib/sanitizeAppPath';
 import BrandLogo from '../BrandLogo/BrandLogo';
 import './Footer.scss';
 
 function Footer() {
-  const [companyInfo, setCompanyInfo] = useState(null);
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { settings: companyInfo, footerNav } = useSite();
   const currentYear = new Date().getFullYear();
-
-  useEffect(() => {
-    fetchFooterData();
-  }, []);
-
-  const fetchFooterData = async () => {
-    try {
-      const [companyRes, servicesRes] = await Promise.allSettled([
-        apiRequest.get('/company/settings'),
-        apiRequest.get('/cms/services'),
-      ]);
-
-      if (companyRes.status === 'fulfilled') setCompanyInfo(companyRes.value.data);
-      if (servicesRes.status === 'fulfilled') setServices(servicesRes.value.data || []);
-    } catch (error) {
-      console.error('Failed to fetch footer data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const companyName = companyInfo?.companyName || 'Suretreaven';
   const defaultDescription = 'Your trusted real estate partner based in Rourkela, Odisha. We help you find the perfect property across Odisha and India.';
+
+  /** Quick links come from the CMS (Admin → Website → Navigation). */
+  const quickLinks = footerNav
+    .filter((item) => item.label && item.url)
+    .slice(0, 8)
+    .map((item) => ({
+      to: sanitizeAppPath(item.url, '/'),
+      label: item.label,
+    }));
 
   return (
     <footer className="footer">
@@ -79,16 +66,15 @@ function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick Links (CMS managed) */}
           <div className="footer-section">
             <h4 className="footer-title">Quick Links</h4>
             <ul className="footer-links">
-              <li><Link to="/">Home</Link></li>
-              <li><Link to="/list">Properties</Link></li>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/contact">Contact Us</Link></li>
-              <li><Link to="/blog">Blog</Link></li>
-              <li><Link to="/faq">FAQ</Link></li>
+              {quickLinks.map(({ to, label }) => (
+                <li key={to + label}>
+                  <Link to={to}>{label}</Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -153,11 +139,9 @@ function Footer() {
             &copy; {currentYear} {companyName}. All rights reserved.
           </p>
           <div className="footer-bottom-links">
-            <Link to="/about">About</Link>
+            <Link to="/privacy">Privacy Policy</Link>
             <span className="separator">|</span>
-            <Link to="/contact">Contact</Link>
-            <span className="separator">|</span>
-            <Link to="/faq">FAQ</Link>
+            <Link to="/terms">Terms &amp; Conditions</Link>
             {companyInfo?.website && (
               <>
                 <span className="separator">|</span>

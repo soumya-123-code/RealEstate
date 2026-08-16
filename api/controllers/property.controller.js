@@ -5,7 +5,7 @@ export const getProperties = async (req, res) => {
   const {
     city, state, locality, propertyType, saleType, listingType, furnishingStatus,
     minPrice, maxPrice, bedroom, bathroom, minArea, maxArea,
-    status, isFeatured, sort, page = 1, limit = 12,
+    status, isFeatured, sort, page = 1, limit = 12, q,
   } = req.query;
 
   const enumValues = {
@@ -36,6 +36,12 @@ export const getProperties = async (req, res) => {
       ...(isFeatured === "true" && { isFeatured: true }),
       ...(minArea && { area: { gte: parseInt(minArea) } }),
       ...(maxArea && { area: { lte: parseInt(maxArea) } }),
+      // Free-text search across the most useful fields
+      ...(q && typeof q === "string" && q.trim() && {
+        OR: ["title", "city", "locality", "state"].map((field) => ({
+          [field]: { contains: q.trim() },
+        })),
+      }),
     };
 
     // Fix: if both minPrice and maxPrice, use combined range

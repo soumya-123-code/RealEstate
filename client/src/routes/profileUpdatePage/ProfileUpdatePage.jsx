@@ -215,7 +215,7 @@ function ProfileUpdatePage() {
 
             <div className="form-section">
               <h2>Change Password</h2>
-              <p className="section-note">Leave blank if you don't want to change password</p>
+              <p className="section-note">Leave blank if you don&apos;t want to change password</p>
 
               <div className="form-group">
                 <label htmlFor="newPassword">

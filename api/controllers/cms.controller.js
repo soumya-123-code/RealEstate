@@ -1,4 +1,140 @@
 import prisma from "../lib/prisma.js";
+import { ensureDefaultPages } from "./page.controller.js";
+
+// ========================================
+// NAVIGATION (header / footer links)
+// ========================================
+
+const DEFAULT_NAV_ITEMS = [
+  { location: "HEADER", label: "Home", url: "/", order: 1 },
+  { location: "HEADER", label: "Properties", url: "/list", order: 2 },
+  { location: "HEADER", label: "Explore", url: "/explore", order: 3 },
+  { location: "HEADER", label: "About", url: "/about", order: 4 },
+  { location: "HEADER", label: "Contact", url: "/contact", order: 5 },
+  { location: "HEADER", label: "Blog", url: "/blog", order: 6 },
+  { location: "HEADER", label: "FAQ", url: "/faq", order: 7 },
+  { location: "FOOTER", label: "Home", url: "/", order: 1 },
+  { location: "FOOTER", label: "Properties", url: "/list", order: 2 },
+  { location: "FOOTER", label: "About Us", url: "/about", order: 3 },
+  { location: "FOOTER", label: "Contact Us", url: "/contact", order: 4 },
+  { location: "FOOTER", label: "Blog", url: "/blog", order: 5 },
+  { location: "FOOTER", label: "FAQ", url: "/faq", order: 6 },
+  { location: "FOOTER", label: "Privacy Policy", url: "/privacy", order: 7 },
+  { location: "FOOTER", label: "Terms & Conditions", url: "/terms", order: 8 },
+];
+
+const hasNavItemTable = async () => {
+  try {
+    await prisma.navItem.findFirst({ take: 1 });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/** Seed the default header/footer links once, so navigation is never empty. */
+export const ensureDefaultNavItems = async () => {
+  if (!(await hasNavItemTable())) return;
+  const count = await prisma.navItem.count();
+  if (count > 0) return;
+  await prisma.navItem.createMany({ data: DEFAULT_NAV_ITEMS });
+};
+
+/** Public: active nav items, optionally filtered by ?location=HEADER|FOOTER */
+export const getNavItems = async (req, res) => {
+  try {
+    if (!(await hasNavItemTable())) {
+      const location = String(req.query.location || "").toUpperCase();
+      const fallback = DEFAULT_NAV_ITEMS.filter(
+        (i) => !location || i.location === location
+      );
+      return res.status(200).json(fallback);
+    }
+
+    await ensureDefaultNavItems();
+    const location = String(req.query.location || "").toUpperCase();
+    const items = await prisma.navItem.findMany({
+      where: { isActive: true, ...(location && { location }) },
+      orderBy: [{ location: "asc" }, { order: "asc" }],
+    });
+    res.status(200).json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to get navigation!" });
+  }
+};
+
+/** Admin: every nav item (both locations) */
+export const getAllNavItems = async (req, res) => {
+  try {
+    if (!(await hasNavItemTable())) {
+      return res.status(200).json(DEFAULT_NAV_ITEMS.map((i, idx) => ({ id: idx + 1, ...i })));
+    }
+    await ensureDefaultNavItems();
+    const items = await prisma.navItem.findMany({
+      orderBy: [{ location: "asc" }, { order: "asc" }],
+    });
+    res.status(200).json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to get navigation!" });
+  }
+};
+
+export const createNavItem = async (req, res) => {
+  try {
+    const { label, url, location = "HEADER", order = 0, isActive = true } = req.body;
+    if (!label || !url) {
+      return res.status(400).json({ message: "Label and URL are required!" });
+    }
+    const loc = String(location).toUpperCase();
+    if (!["HEADER", "FOOTER"].includes(loc)) {
+      return res.status(400).json({ message: "Location must be HEADER or FOOTER!" });
+    }
+    const item = await prisma.navItem.create({
+      data: { label, url, location: loc, order: Number(order) || 0, isActive: !!isActive },
+    });
+    res.status(201).json(item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to create navigation item!" });
+  }
+};
+
+export const updateNavItem = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const data = {};
+    if (req.body.label !== undefined) data.label = req.body.label;
+    if (req.body.url !== undefined) data.url = req.body.url;
+    if (req.body.location !== undefined) {
+      const loc = String(req.body.location).toUpperCase();
+      if (!["HEADER", "FOOTER"].includes(loc)) {
+        return res.status(400).json({ message: "Location must be HEADER or FOOTER!" });
+      }
+      data.location = loc;
+    }
+    if (req.body.order !== undefined) data.order = Number(req.body.order) || 0;
+    if (req.body.isActive !== undefined) data.isActive = !!req.body.isActive;
+
+    const item = await prisma.navItem.update({ where: { id }, data });
+    res.status(200).json(item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update navigation item!" });
+  }
+};
+
+export const deleteNavItem = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await prisma.navItem.delete({ where: { id } });
+    res.status(200).json({ message: "Navigation item deleted!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete navigation item!" });
+  }
+};
 
 // ========================================
 // HERO BANNERS
@@ -812,6 +948,32 @@ export const getHomepageData = async (req, res) => {
       prisma.teamMember.findMany({ where: { isActive: true }, orderBy: { order: "asc" }, take: 4 }),
     ]);
 
+    // Section composition drives order + visibility of homepage blocks.
+    let sections = [];
+    try {
+      await ensureDefaultPages();
+      const homePage = await prisma.websitePage.findUnique({
+        where: { key: "home" },
+        include: {
+          sections: { where: { isActive: true }, orderBy: { order: "asc" } },
+        },
+      });
+      sections = homePage?.sections || [];
+    } catch (sectionErr) {
+      console.error("Homepage sections unavailable:", sectionErr.message);
+    }
+
+    // Fall back to newest available listings when nothing is flagged featured,
+    // so the homepage never renders without properties to browse.
+    let featuredList = featuredProperties;
+    if (featuredList.length === 0) {
+      featuredList = await prisma.property.findMany({
+        where: { status: "AVAILABLE" },
+        take: 6,
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
     // Get unique cities with property counts
     const cityStats = await prisma.property.groupBy({
       by: ["city", "state"],
@@ -832,11 +994,12 @@ export const getHomepageData = async (req, res) => {
       banners,
       services,
       testimonials,
-      featuredProperties,
+      featuredProperties: featuredList,
       companyInfo,
       blogPosts,
       partners,
       team,
+      sections,
       cityStats: cityStats.map(c => ({ city: c.city, state: c.state, count: c._count.city })),
       stats,
     });

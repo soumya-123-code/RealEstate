@@ -585,6 +585,27 @@ enum NotificationType {
 }
 
 // ========================================
+// NAVIGATION (header / footer links)
+// Auth-related links (login, profile,
+// dashboards) stay in application code and
+// are never stored here.
+// ========================================
+
+model NavItem {
+  id        Int      @id @default(autoincrement())
+  location  String   // HEADER | FOOTER
+  label     String
+  url       String
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([location, order])
+  @@index([isActive])
+}
+
+// ========================================
 // SEO / SITE SETTINGS
 // ========================================
 

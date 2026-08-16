@@ -35,9 +35,11 @@ function AdminStaff() {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
 
-  if (!isAdmin()) return <Navigate to="/admin" replace />;
+  // Hooks must run unconditionally — the admin guard renders after them
+  const admin = isAdmin();
+  useEffect(() => { if (admin) fetchStaff(); }, [admin]);
 
-  useEffect(() => { fetchStaff(); }, []);
+  if (!admin) return <Navigate to="/admin" replace />;
 
   const fetchStaff = async () => {
     try {
@@ -149,11 +151,7 @@ function AdminStaff() {
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>Staff Management</h1>
-          <p>Create and manage staff accounts with role-based permissions</p>
-        </div>
+      <div className="page-actions">
         <button className="btn-primary" onClick={openAdd}>
           <FiPlus /> Add Staff
         </button>

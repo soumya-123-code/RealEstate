@@ -61,11 +61,7 @@ function AdminUsers() {
 
   return (
     <div className="admin-users">
-      <div className="page-header">
-        <div>
-          <h1>User Management</h1>
-          <p>View all registered users and agents</p>
-        </div>
+      <div className="page-actions">
         <Link to="/admin/staff" className="btn-secondary">
           <FiShield /> Manage Staff
         </Link>

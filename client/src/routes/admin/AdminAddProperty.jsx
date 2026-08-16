@@ -149,11 +149,6 @@ function AdminAddProperty() {
 
   return (
     <div className="admin-add-property">
-      <div className="page-header">
-        <h1>Add New Property</h1>
-        <p>Fill in the details to add a new property</p>
-      </div>
-
       <form onSubmit={handleSubmit} className="property-form">
         <div className="form-section">
           <h2>Basic Information</h2>

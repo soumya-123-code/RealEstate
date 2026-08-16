@@ -1,5 +1,5 @@
 // ─── Variables ────────────────────────────────────────────────────────────────
-$primary : var(--primary, #6366f1);
+$primary : var(--primary, #1e2a45);
 
 // ─── Wrapper ──────────────────────────────────────────────────────────────────
 .admin-chat {
@@ -30,7 +30,7 @@ $primary : var(--primary, #6366f1);
   border-radius: 50%;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #2c3e6b 0%, #1e2a45 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -680,7 +680,7 @@ $primary : var(--primary, #6366f1);
   text-align: center;
   min-width: 240px;
   h3 { margin: 0; font-size: 1.1rem; }
-  p  { margin: 0; color: #a5b4fc; font-size: .875rem; }
+  p  { margin: 0; color: #e8c37a; font-size: .875rem; }
 }
 .ac-call-btn {
   width: 52px; height: 52px;
@@ -745,7 +745,7 @@ $primary : var(--primary, #6366f1);
   transition: background .15s, color .15s;
   flex-shrink: 0;
   text-decoration: none;
-  &:hover:not(:disabled) { background: #f0f0f5; color: var(--primary, #6366f1); }
+  &:hover:not(:disabled) { background: #f0f0f5; color: var(--primary, #1e2a45); }
   &--video:hover:not(:disabled) { background: #ecfdf5; color: #22c55e; }
   &:disabled { opacity: .4; cursor: not-allowed; }
 }

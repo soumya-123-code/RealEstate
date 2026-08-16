@@ -4,14 +4,54 @@ import apiRequest from '../../lib/apiRequest';
 import { motion } from 'framer-motion';
 import { FiShield, FiDollarSign, FiHeadphones, FiZap, FiMapPin, FiPhone, FiMail, FiArrowRight, FiTarget, FiEye, FiAward, FiUsers, FiGlobe } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import Seo from '../../components/Seo/Seo';
+import { usePageSections } from '../../hooks/usePageSections';
+import { sanitizeAppPath } from '../../lib/sanitizeAppPath';
 import './About.scss';
+
+// Animated counter — module-level component so hooks are not created inside a callback
+function AnimatedCounter({ value, suffix = '+' }) {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          let start = 0;
+          const end = parseInt(value) || 0;
+          if (end === 0) return;
+          const duration = 2000;
+          const increment = end / (duration / 16);
+          const timer = setInterval(() => {
+            start += increment;
+            if (start >= end) {
+              setCount(end);
+              clearInterval(timer);
+            } else {
+              setCount(Math.floor(start));
+            }
+          }, 16);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [value, hasAnimated]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+}
 
 function About() {
   const [companyInfo, setCompanyInfo] = useState(null);
   const [team, setTeam] = useState([]);
   const [services, setServices] = useState([]);
   const [partners, setPartners] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { section, show, value: sectionValue } = usePageSections('about');
 
   useEffect(() => {
     const fetchAboutData = async () => {
@@ -30,48 +70,10 @@ function About() {
       } catch (error) {
         console.error('Error fetching about data:', error);
         toast.error('Failed to load some content');
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchAboutData();
-  }, []);
-
-  const AnimatedCounter = useCallback(({ value, suffix = '+' }) => {
-    const [count, setCount] = useState(0);
-    const [hasAnimated, setHasAnimated] = useState(false);
-    const ref = useRef(null);
-
-    useEffect(() => {
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting && !hasAnimated) {
-            setHasAnimated(true);
-            let start = 0;
-            const end = parseInt(value) || 0;
-            if (end === 0) return;
-            const duration = 2000;
-            const increment = end / (duration / 16);
-            const timer = setInterval(() => {
-              start += increment;
-              if (start >= end) {
-                setCount(end);
-                clearInterval(timer);
-              } else {
-                setCount(Math.floor(start));
-              }
-            }, 16);
-          }
-        },
-        { threshold: 0.3 }
-      );
-
-      if (ref.current) observer.observe(ref.current);
-      return () => observer.disconnect();
-    }, [value, hasAnimated]);
-
-    return <span ref={ref}>{count}{suffix}</span>;
   }, []);
 
   const getFeatureIcon = (iconName) => {
@@ -117,7 +119,9 @@ function About() {
 
   return (
     <div className="about-page">
+      <Seo page="about" />
       {/* Hero Section */}
+      {show('hero') && (
       <section className="about-hero">
         <div className="hero-overlay" />
         <div className="container">
@@ -128,13 +132,15 @@ function About() {
             transition={{ duration: 0.8 }}
           >
             <span className="hero-badge">About Us</span>
-            <h1>{companyName}</h1>
-            <p>{companyInfo?.tagline || 'Your trusted partner in finding the perfect property in Rourkela & Odisha'}</p>
+            <h1>{sectionValue('hero', null, 'title', companyName)}</h1>
+            <p>{sectionValue('hero', null, 'subtitle', companyInfo?.tagline || 'Your trusted partner in finding the perfect property in Rourkela & Odisha')}</p>
           </motion.div>
         </div>
       </section>
+      )}
 
       {/* Company Overview */}
+      {show('intro', 'COMPANY_INTRO') && (
       <section className="about-overview">
         <div className="container">
           <div className="overview-grid">
@@ -145,9 +151,9 @@ function About() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2>Who We Are</h2>
+              <h2>{sectionValue('intro', 'COMPANY_INTRO', 'title', 'Who We Are')}</h2>
               <p className="overview-description">
-                {companyInfo?.description || 'We are a leading real estate platform based in Rourkela, Odisha, dedicated to making property buying, selling, and renting easier and more transparent. Our platform connects property seekers with their dream homes while providing comprehensive property management solutions.'}
+                {companyInfo?.description || section?.content || 'We are a leading real estate platform based in Rourkela, Odisha, dedicated to making property buying, selling, and renting easier and more transparent. Our platform connects property seekers with their dream homes while providing comprehensive property management solutions.'}
               </p>
 
               <div className="overview-highlights">
@@ -190,6 +196,7 @@ function About() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Stats Section */}
       <section className="about-stats">
@@ -216,6 +223,7 @@ function About() {
       </section>
 
       {/* Why Choose Us / Services */}
+      {show('services', 'SERVICES') && (
       <section className="about-services">
         <div className="container">
           <motion.div
@@ -225,8 +233,8 @@ function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2>Why Choose {companyName}</h2>
-            <p>Your trusted partner in real estate since {companyInfo?.foundedYear || 2014}</p>
+            <h2>{sectionValue('services', 'SERVICES', 'title', `Why Choose ${companyName}`)}</h2>
+            <p>{sectionValue('services', 'SERVICES', 'subtitle', `Your trusted partner in real estate since ${companyInfo?.foundedYear || 2014}`)}</p>
           </motion.div>
 
           <motion.div
@@ -253,9 +261,10 @@ function About() {
           </motion.div>
         </div>
       </section>
+      )}
 
       {/* Team Section */}
-      {team.length > 0 && (
+      {show('team', 'TEAM') && team.length > 0 && (
         <section className="about-team">
           <div className="container">
             <motion.div
@@ -265,8 +274,8 @@ function About() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <h2>Meet Our Team</h2>
-              <p>The experts behind your real estate success</p>
+              <h2>{sectionValue('team', 'TEAM', 'title', 'Meet Our Team')}</h2>
+              <p>{sectionValue('team', 'TEAM', 'subtitle', 'The experts behind your real estate success')}</p>
             </motion.div>
 
             <motion.div
@@ -309,7 +318,7 @@ function About() {
       )}
 
       {/* Partners Section */}
-      {partners.length > 0 && (
+      {show('partners', 'PARTNERS') && partners.length > 0 && (
         <section className="about-partners">
           <div className="container">
             <motion.div
@@ -319,8 +328,8 @@ function About() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <h2>Our Trusted Partners</h2>
-              <p>Collaborating with top organizations for the best real estate experience</p>
+              <h2>{sectionValue('partners', 'PARTNERS', 'title', 'Our Trusted Partners')}</h2>
+              <p>{sectionValue('partners', 'PARTNERS', 'subtitle', 'Collaborating with top organizations for the best real estate experience')}</p>
             </motion.div>
 
             <motion.div
@@ -371,6 +380,7 @@ function About() {
       )}
 
       {/* CTA Section */}
+      {show('cta', 'CTA') && (
       <section className="about-cta">
         <div className="container">
           <motion.div
@@ -380,11 +390,11 @@ function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2>Ready to Find Your Dream Property?</h2>
-            <p>Contact our team today and let us help you find the perfect property in Rourkela and across Odisha.</p>
+            <h2>{sectionValue('cta', 'CTA', 'title', 'Ready to Find Your Dream Property?')}</h2>
+            <p>{sectionValue('cta', 'CTA', 'subtitle', 'Contact our team today and let us help you find the perfect property in Rourkela and across Odisha.')}</p>
             <div className="cta-buttons">
-              <Link to="/list" className="btn btn-primary btn-lg">
-                Browse Properties <FiArrowRight />
+              <Link to={sanitizeAppPath(section?.buttonLink, '/list')} className="btn btn-primary btn-lg">
+                {sectionValue('cta', 'CTA', 'buttonText', 'Browse Properties')} <FiArrowRight />
               </Link>
               <Link to="/contact" className="btn btn-outline btn-lg">
                 Contact Us
@@ -398,6 +408,7 @@ function About() {
           </motion.div>
         </div>
       </section>
+      )}
     </div>
   );
 }

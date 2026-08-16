@@ -28,13 +28,19 @@ export const getAdminUser = async (req, res) => {
 export const getUsers = async (req, res) => {
   try {
     console.log("[DEBUG] getUsers called");
-    const { role, exclude } = req.query;
+    const { role, exclude, q } = req.query;
     const where = {};
     if (role && role !== 'all') {
       where.role = role;
     }
     if (exclude) {
       where.id = { not: parseInt(exclude) };
+    }
+    // Free-text search for the admin panel search bar
+    if (q && typeof q === 'string' && q.trim()) {
+      where.OR = ['username', 'email', 'phone'].map((field) => ({
+        [field]: { contains: q.trim() },
+      }));
     }
     const users = await prisma.user.findMany({
       where,

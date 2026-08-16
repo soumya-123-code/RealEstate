@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   FiAlertCircle, FiArrowDown, FiArrowLeft, FiArrowUp, FiEdit2, FiExternalLink,
-  FiImage, FiPlus, FiRefreshCw, FiTrash2, FiToggleLeft, FiToggleRight, FiX,
+  FiEye, FiEyeOff, FiImage, FiPlus, FiRefreshCw, FiTrash2, FiX,
 } from 'react-icons/fi';
 import apiRequest from '../../../lib/apiRequest';
 import { resolveAssetUrl } from '../../../lib/config';
@@ -254,7 +254,7 @@ function AdminPageEditor() {
         <div className="cms-state cms-state--error">
           <FiAlertCircle size={28} />
           <p>{error || 'Page not found'}</p>
-          <Link to="/admin/pages" className="cms-btn cms-btn--ghost">
+          <Link to="/admin/cms/pages" className="cms-btn cms-btn--ghost">
             <FiArrowLeft size={15} /> Back to pages
           </Link>
         </div>
@@ -272,7 +272,7 @@ function AdminPageEditor() {
           </p>
         </div>
         <div className="cms-toolbar__actions">
-          <Link to="/admin/pages" className="cms-btn cms-btn--ghost">
+          <Link to="/admin/cms/pages" className="cms-btn cms-btn--ghost">
             <FiArrowLeft size={15} /> Pages
           </Link>
           <button type="button" className="cms-btn cms-btn--ghost" onClick={fetchPage}>
@@ -354,9 +354,15 @@ function AdminPageEditor() {
           )}
         </div>
       ) : (
-        <div className="cms-section-list">
+        <>
+          <p className="cms-list-hint">
+            <FiEye size={13} />
+            Use <strong>Visible / Hidden</strong> to control which sections appear on the live
+            website, and the arrows to change their order.
+          </p>
+          <div className="cms-section-list">
           {sections.map((section, idx) => (
-            <div key={section.id} className="cms-section-row">
+            <div key={section.id} className={`cms-section-row ${section.isActive ? '' : 'is-hidden'}`}>
               <div className="cms-section-row__order">
                 <button
                   type="button"
@@ -389,12 +395,17 @@ function AdminPageEditor() {
               <div className="cms-section-row__actions">
                 <button
                   type="button"
-                  className={`cms-status ${section.isActive ? 'on' : 'off'}`}
+                  className={`cms-visibility ${section.isActive ? 'visible' : 'hidden'}`}
                   onClick={() => toggleSection(section)}
                   disabled={!canWrite}
+                  title={
+                    section.isActive
+                      ? 'Hide this section from the website'
+                      : 'Show this section on the website'
+                  }
                 >
-                  {section.isActive ? <FiToggleRight size={18} /> : <FiToggleLeft size={18} />}
-                  {section.isActive ? 'Active' : 'Off'}
+                  {section.isActive ? <FiEye size={15} /> : <FiEyeOff size={15} />}
+                  {section.isActive ? 'Visible' : 'Hidden'}
                 </button>
                 <button
                   type="button"
@@ -417,7 +428,8 @@ function AdminPageEditor() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {modalOpen && (

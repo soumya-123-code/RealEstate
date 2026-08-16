@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import apiRequest from '../../lib/apiRequest';
 import Card from '../../components/Card/Card';
 import { PropertyListSkeleton } from '../../components/Skeleton/Skeleton';
+import Seo from '../../components/Seo/Seo';
 import { sanitizeAppPath } from '../../lib/sanitizeAppPath';
 import { mediaUrl } from '../../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +26,48 @@ import {
 } from 'react-icons/fi';
 import './HomePage.scss';
 
+// Animated counter — module-level component so hooks are not created inside a callback
+function AnimatedCounter({ value, suffix = '+' }) {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          let start = 0;
+          const end = parseInt(value) || 0;
+          if (end === 0) return;
+          const duration = 2000;
+          const increment = end / (duration / 16);
+          const timer = setInterval(() => {
+            start += increment;
+            if (start >= end) {
+              setCount(end);
+              clearInterval(timer);
+            } else {
+              setCount(Math.floor(start));
+            }
+          }, 16);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [value, hasAnimated]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+}
+
+/**
+ * Section renderer registry. Order and visibility come from the CMS page
+ * composition (Admin → Website → Pages → Home); each renderer receives its
+ * PageSection so admins control titles, subtitles and CTA labels.
+ */
 function HomePage() {
   const navigate = useNavigate();
   const [homeData, setHomeData] = useState(null);
@@ -34,7 +77,7 @@ function HomePage() {
   const statsRef = useRef(null);
   const bannerIntervalRef = useRef(null);
 
-  // Default fallback data
+  // Default fallback data — used only when the CMS has no content yet
   const defaultBanners = [
     {
       title: "Find a place you'll be proud to call home.",
@@ -52,50 +95,6 @@ function HomePage() {
     { icon: 'headphones', title: 'Expert Support', description: '24/7 customer support to help you with all your property queries and concerns' },
     { icon: 'zap', title: 'Quick Process', description: 'Fast and hassle-free booking process with instant confirmation and documentation' }
   ];
-
-  const defaultStats = [
-    { value: 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
-    { value: 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
-    { value: 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
-    { value: 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
-  ];
-
-  // Animated counter component
-  const AnimatedCounter = useCallback(({ value, suffix = '+' }) => {
-    const [count, setCount] = useState(0);
-    const [hasAnimated, setHasAnimated] = useState(false);
-    const ref = useRef(null);
-
-    useEffect(() => {
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting && !hasAnimated) {
-            setHasAnimated(true);
-            let start = 0;
-            const end = parseInt(value) || 0;
-            if (end === 0) return;
-            const duration = 2000;
-            const increment = end / (duration / 16);
-            const timer = setInterval(() => {
-              start += increment;
-              if (start >= end) {
-                setCount(end);
-                clearInterval(timer);
-              } else {
-                setCount(Math.floor(start));
-              }
-            }, 16);
-          }
-        },
-        { threshold: 0.3 }
-      );
-
-      if (ref.current) observer.observe(ref.current);
-      return () => observer.disconnect();
-    }, [value, hasAnimated]);
-
-    return <span ref={ref}>{count}{suffix}</span>;
-  }, []);
 
   // Get icon component from string name
   const getFeatureIcon = (iconName) => {
@@ -118,7 +117,7 @@ function HomePage() {
     return icons[iconName] || <FiZap size={28} />;
   };
 
-  // Fetch homepage data from CMS API
+  // Fetch homepage data (content + section composition) from CMS API
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
@@ -157,32 +156,6 @@ function HomePage() {
     };
   }, [homeData?.banners]);
 
-  // Build stats from CMS data or defaults
-  const buildStats = () => {
-    const companyInfo = homeData?.companyInfo;
-    const apiStats = homeData?.stats;
-
-    if (companyInfo && (companyInfo.statsProperties > 0 || companyInfo.statsYears > 0)) {
-      return [
-        { value: companyInfo.statsProperties || apiStats?.totalProperties || 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
-        { value: companyInfo.statsCustomers || 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
-        { value: companyInfo.statsCities || apiStats?.totalCities || 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
-        { value: companyInfo.statsYears || 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
-      ];
-    }
-
-    if (apiStats) {
-      return [
-        { value: apiStats.totalProperties || 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
-        { value: apiStats.totalBookings || 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
-        { value: apiStats.totalCities || 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
-        { value: 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
-      ];
-    }
-
-    return defaultStats;
-  };
-
   const banners = homeData?.banners || defaultBanners;
   const services = homeData?.services || defaultFeatures;
   const testimonials = homeData?.testimonials || [];
@@ -191,7 +164,32 @@ function HomePage() {
   const partners = homeData?.partners || [];
   const cityStats = homeData?.cityStats || [];
   const companyName = homeData?.companyInfo?.companyName || 'Suretreaven';
-  const stats = buildStats();
+
+  /**
+   * CMS section composition. When absent (fresh install / API down) fall
+   * back to the canonical layout so the homepage is never blank.
+   */
+  const FALLBACK_SECTIONS = [
+    { key: 'hero', type: 'HERO' },
+    { key: 'search', type: 'SEARCH' },
+    { key: 'stats', type: 'STATS' },
+    { key: 'featured', type: 'FEATURED_PROPERTIES' },
+    { key: 'services', type: 'SERVICES' },
+    { key: 'cities', type: 'CUSTOM' },
+    { key: 'testimonials', type: 'TESTIMONIALS' },
+    { key: 'partners', type: 'PARTNERS' },
+    { key: 'blog', type: 'BLOG' },
+    { key: 'cta', type: 'CTA', subtitle: 'Ready to find your dream property?', buttonText: 'Browse Properties', buttonLink: '/list' },
+  ];
+  const sections =
+    Array.isArray(homeData?.sections) && homeData.sections.length > 0
+      ? homeData.sections
+      : FALLBACK_SECTIONS;
+
+  const sectionValue = (section, field, fallback) => {
+    const v = section?.[field];
+    return v === undefined || v === null || v === '' ? fallback : v;
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -207,82 +205,83 @@ function HomePage() {
     return <PropertyListSkeleton />;
   }
 
-  return (
-    <div className="homePage">
-      {/* ===== HERO BANNER SECTION ===== */}
-      <section className="hero-section" aria-label="Featured properties">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeBanner}
-            className="hero-slide"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.7 }}
-          >
-            {banners[activeBanner]?.image ? (
-              <div
-                className="hero-bg-image"
-                style={{
-                  backgroundImage: `url(${mediaUrl(banners[activeBanner].image)})`,
-                }}
-              />
-            ) : (
-              <div className="hero-bg-gradient" />
-            )}
-          </motion.div>
-        </AnimatePresence>
-        <div className="hero-overlay" aria-hidden="true" />
+  // ============ SECTION RENDERERS ============
 
-        <div className="hero-content">
-          <motion.p
-            className="hero-brand"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-          >
-            {companyName}
-          </motion.p>
+  const renderHero = (section, ctx) => (
+    <section className="hero-section" aria-label="Featured properties" key="hero">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeBanner}
+          className="hero-slide"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.7 }}
+        >
+          {banners[activeBanner]?.image ? (
+            <div
+              className="hero-bg-image"
+              style={{
+                backgroundImage: `url(${mediaUrl(banners[activeBanner].image)})`,
+              }}
+            />
+          ) : (
+            <div className="hero-bg-gradient" />
+          )}
+        </motion.div>
+      </AnimatePresence>
+      <div className="hero-overlay" aria-hidden="true" />
 
-          <motion.h1
-            key={`title-${activeBanner}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-          >
-            {banners[activeBanner]?.title || "Find a place you'll be proud to call home."}
-          </motion.h1>
+      <div className="hero-content">
+        <motion.p
+          className="hero-brand"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
+          {companyName}
+        </motion.p>
 
-          <motion.p
-            key={`subtitle-${activeBanner}`}
-            className="hero-subtitle"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            {banners[activeBanner]?.subtitle || 'Explore premium verified properties across Odisha'}
-          </motion.p>
+        <motion.h1
+          key={`title-${activeBanner}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+        >
+          {banners[activeBanner]?.title || sectionValue(section, 'title', "Find a place you'll be proud to call home.")}
+        </motion.h1>
 
-          <motion.div
-            className="hero-buttons"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <Link
-              to={sanitizeAppPath(banners[activeBanner]?.buttonLink, '/list')}
-              className="hero-btn primary"
-            >
-              {banners[activeBanner]?.buttonText || 'Explore Properties'} <FiArrowRight />
-            </Link>
-            <Link to="/explore" className="hero-btn secondary">
-              <FiMapPin /> Map View
-            </Link>
-            <Link to="/contact" className="hero-btn ghost">
-              Contact Us
-            </Link>
-          </motion.div>
+        <motion.p
+          key={`subtitle-${activeBanner}`}
+          className="hero-subtitle"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          {banners[activeBanner]?.subtitle || sectionValue(section, 'subtitle', 'Explore premium verified properties across Odisha')}
+        </motion.p>
 
+        <motion.div
+          className="hero-buttons"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
+          <Link
+            to={sanitizeAppPath(banners[activeBanner]?.buttonLink, '/list')}
+            className="hero-btn primary"
+          >
+            {banners[activeBanner]?.buttonText || 'Explore Properties'} <FiArrowRight />
+          </Link>
+          <Link to="/explore" className="hero-btn secondary">
+            <FiMapPin /> Map View
+          </Link>
+          <Link to="/contact" className="hero-btn ghost">
+            Contact Us
+          </Link>
+        </motion.div>
+
+        {ctx.searchEnabled && (
           <motion.form
             className="hero-search"
             initial={{ opacity: 0, y: 16 }}
@@ -319,27 +318,57 @@ function HomePage() {
               <FiSearch /> Search
             </button>
           </motion.form>
+        )}
 
-          {banners.length > 1 && (
-            <div className="hero-indicators" role="tablist" aria-label="Hero slides">
-              {banners.map((_, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeBanner === index}
-                  aria-label={`Show slide ${index + 1}`}
-                  className={`indicator ${activeBanner === index ? 'active' : ''}`}
-                  onClick={() => setActiveBanner(index)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+        {banners.length > 1 && (
+          <div className="hero-indicators" role="tablist" aria-label="Hero slides">
+            {banners.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                role="tab"
+                aria-selected={activeBanner === index}
+                aria-label={`Show slide ${index + 1}`}
+                className={`indicator ${activeBanner === index ? 'active' : ''}`}
+                onClick={() => setActiveBanner(index)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
 
-      {/* ===== STATS COUNTER ===== */}
-      <section className="stats-section" ref={statsRef}>
+  const renderStats = () => {
+    const companyInfo = homeData?.companyInfo;
+    const apiStats = homeData?.stats;
+
+    let stats;
+    if (companyInfo && (companyInfo.statsProperties > 0 || companyInfo.statsYears > 0)) {
+      stats = [
+        { value: companyInfo.statsProperties || apiStats?.totalProperties || 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
+        { value: companyInfo.statsCustomers || 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
+        { value: companyInfo.statsCities || apiStats?.totalCities || 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
+        { value: companyInfo.statsYears || 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
+      ];
+    } else if (apiStats) {
+      stats = [
+        { value: apiStats.totalProperties || 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
+        { value: apiStats.totalBookings || 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
+        { value: apiStats.totalCities || 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
+        { value: 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
+      ];
+    } else {
+      stats = [
+        { value: 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
+        { value: 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
+        { value: 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
+        { value: 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
+      ];
+    }
+
+    return (
+      <section className="stats-section" ref={statsRef} key="stats">
         <div className="container">
           <div className="stats-grid">
             {stats.map((stat, index) => (
@@ -361,39 +390,15 @@ function HomePage() {
           </div>
         </div>
       </section>
+    );
+  };
 
-      {/* ===== FEATURED PROPERTIES ===== */}
-      {featuredProperties.length > 0 && (
-        <section className="featured-section">
-          <div className="container">
-            <motion.div
-              className="section-header"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <h2>Featured Properties</h2>
-              <p>Handpicked properties in prime locations across Odisha</p>
-            </motion.div>
+  const renderFeatured = (section) => {
+    if (!featuredProperties.length) return null;
+    const limit = Number(section?.config?.count) || 6;
 
-            <div className="featured-grid">
-              {featuredProperties.map((property, index) => (
-                <Card key={property.id} item={property} />
-              ))}
-            </div>
-
-            <div className="section-cta">
-              <Link to="/list" className="cta-btn">
-                View All Properties <FiArrowRight />
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== WHY CHOOSE US / SERVICES ===== */}
-      <section className="features-section">
+    return (
+      <section className="featured-section" key="featured">
         <div className="container">
           <motion.div
             className="section-header"
@@ -402,287 +407,388 @@ function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2>Why Choose {companyName}</h2>
-            <p>Your trusted real estate partner in Odisha since {homeData?.companyInfo?.foundedYear || 2014}</p>
+            <h2>{sectionValue(section, 'title', 'Featured Properties')}</h2>
+            <p>{sectionValue(section, 'subtitle', 'Handpicked properties in prime locations across Odisha')}</p>
+          </motion.div>
+
+          <div className="featured-grid">
+            {featuredProperties.slice(0, limit).map((property) => (
+              <Card key={property.id} item={property} />
+            ))}
+          </div>
+
+          <div className="section-cta">
+            <Link to="/list" className="cta-btn">
+              View All Properties <FiArrowRight />
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const renderServices = (section) => (
+    <section className="features-section" key="services">
+      <div className="container">
+        <motion.div
+          className="section-header"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2>{sectionValue(section, 'title', `Why Choose ${companyName}`)}</h2>
+          <p>{sectionValue(section, 'subtitle', `Your trusted real estate partner in Odisha since ${homeData?.companyInfo?.foundedYear || 2014}`)}</p>
+        </motion.div>
+
+        <motion.div
+          className="features-grid"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          {services.map((service, index) => (
+            <motion.div
+              key={service.id || index}
+              className="feature-card"
+              variants={itemVariants}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
+            >
+              <div className="feature-icon-wrapper">
+                {service.icon ? getFeatureIcon(service.icon) : <FiZap size={28} />}
+              </div>
+              <h3>{service.title}</h3>
+              <p>{service.description}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+
+  const renderCities = (section) => {
+    if (!cityStats.length) return null;
+
+    return (
+      <section className="cities-section" key="cities">
+        <div className="container">
+          <motion.div
+            className="section-header"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2>{sectionValue(section, 'title', 'Popular Cities in Odisha')}</h2>
+            <p>{sectionValue(section, 'subtitle', 'Explore properties in top cities across the state')}</p>
+          </motion.div>
+
+          <div className="cities-grid">
+            {cityStats.map((city, index) => (
+              <motion.div
+                key={index}
+                className="city-card"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.4 }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                onClick={() => navigate(`/list?city=${encodeURIComponent(city.city)}`)}
+              >
+                <div className="city-icon"><FiMapPin size={24} /></div>
+                <h3>{city.city}</h3>
+                <p>{city.state}</p>
+                <span className="city-count">{city.count} Properties</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const renderTestimonials = (section) => {
+    if (!testimonials.length) return null;
+
+    return (
+      <section className="testimonials-section" key="testimonials">
+        <div className="container">
+          <motion.div
+            className="section-header"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2>{sectionValue(section, 'title', 'What Our Clients Say')}</h2>
+            <p>{sectionValue(section, 'subtitle', 'Trusted by thousands of property buyers across Odisha')}</p>
+          </motion.div>
+
+          <div className="testimonials-carousel">
+            <button
+              className="carousel-btn prev"
+              onClick={() => setActiveTestimonial(prev => (prev - 1 + testimonials.length) % testimonials.length)}
+            >
+              <FiChevronLeft />
+            </button>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTestimonial}
+                className="testimonial-card"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.4 }}
+              >
+                <div className="testimonial-rating">
+                  {[...Array(testimonials[activeTestimonial]?.rating || 5)].map((_, i) => (
+                    <FiStar key={i} className="star" />
+                  ))}
+                </div>
+                <p className="testimonial-text">&ldquo;{testimonials[activeTestimonial]?.text}&rdquo;</p>
+                <div className="testimonial-author">
+                  <div className="author-avatar">
+                    {testimonials[activeTestimonial]?.avatar ? (
+                      <img src={mediaUrl(testimonials[activeTestimonial].avatar)} alt={testimonials[activeTestimonial].name} />
+                    ) : (
+                      <FiUser size={24} />
+                    )}
+                  </div>
+                  <div>
+                    <h4>{testimonials[activeTestimonial]?.name}</h4>
+                    <p>{testimonials[activeTestimonial]?.role}{testimonials[activeTestimonial]?.company ? ` at ${testimonials[activeTestimonial].company}` : ''}</p>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            <button
+              className="carousel-btn next"
+              onClick={() => setActiveTestimonial(prev => (prev + 1) % testimonials.length)}
+            >
+              <FiChevronRight />
+            </button>
+          </div>
+
+          <div className="testimonial-dots">
+            {testimonials.map((_, index) => (
+              <button
+                key={index}
+                className={`dot ${activeTestimonial === index ? 'active' : ''}`}
+                onClick={() => setActiveTestimonial(index)}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const renderPartners = (section) => {
+    if (!partners.length) return null;
+
+    return (
+      <section className="partners-section" key="partners">
+        <div className="container">
+          <motion.div
+            className="section-header"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2>{sectionValue(section, 'title', 'Our Trusted Partners')}</h2>
+            <p>{sectionValue(section, 'subtitle', 'Collaborating with top organizations for the best real estate experience')}</p>
           </motion.div>
 
           <motion.div
-            className="features-grid"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
+            className="partners-grid"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
           >
-            {services.map((service, index) => (
-              <motion.div
-                key={service.id || index}
-                className="feature-card"
-                variants={itemVariants}
-                whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              >
-                <div className="feature-icon-wrapper">
-                  {service.icon ? getFeatureIcon(service.icon) : <FiZap size={28} />}
-                </div>
-                <h3>{service.title}</h3>
-                <p>{service.description}</p>
-              </motion.div>
+            {partners.map((partner, index) => (
+              <div key={partner.id || index} className="partner-card">
+                {partner.website ? (
+                  <a href={partner.website} target="_blank" rel="noopener noreferrer">
+                    {partner.logo ? (
+                      <img
+                        src={mediaUrl(partner.logo)}
+                        alt={partner.name}
+                        className="partner-logo"
+                      />
+                    ) : (
+                      <div className="partner-name-only">{partner.name}</div>
+                    )}
+                  </a>
+                ) : (
+                  <>
+                    {partner.logo ? (
+                      <img
+                        src={mediaUrl(partner.logo)}
+                        alt={partner.name}
+                        className="partner-logo"
+                      />
+                    ) : (
+                      <div className="partner-name-only">{partner.name}</div>
+                    )}
+                  </>
+                )}
+              </div>
             ))}
           </motion.div>
         </div>
       </section>
+    );
+  };
 
-      {/* ===== POPULAR CITIES ===== */}
-      {cityStats.length > 0 && (
-        <section className="cities-section">
-          <div className="container">
-            <motion.div
-              className="section-header"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <h2>Popular Cities in Odisha</h2>
-              <p>Explore properties in top cities across the state</p>
-            </motion.div>
+  const renderBlog = (section) => {
+    if (!blogPosts.length) return null;
 
-            <div className="cities-grid">
-              {cityStats.map((city, index) => (
-                <motion.div
-                  key={index}
-                  className="city-card"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.4 }}
-                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                  onClick={() => navigate(`/list?city=${encodeURIComponent(city.city)}`)}
-                >
-                  <div className="city-icon"><FiMapPin size={24} /></div>
-                  <h3>{city.city}</h3>
-                  <p>{city.state}</p>
-                  <span className="city-count">{city.count} Properties</span>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== TESTIMONIALS ===== */}
-      {testimonials.length > 0 && (
-        <section className="testimonials-section">
-          <div className="container">
-            <motion.div
-              className="section-header"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <h2>What Our Clients Say</h2>
-              <p>Trusted by thousands of property buyers across Odisha</p>
-            </motion.div>
-
-            <div className="testimonials-carousel">
-              <button
-                className="carousel-btn prev"
-                onClick={() => setActiveTestimonial(prev => (prev - 1 + testimonials.length) % testimonials.length)}
-              >
-                <FiChevronLeft />
-              </button>
-
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTestimonial}
-                  className="testimonial-card"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <div className="testimonial-rating">
-                    {[...Array(testimonials[activeTestimonial]?.rating || 5)].map((_, i) => (
-                      <FiStar key={i} className="star" />
-                    ))}
-                  </div>
-                  <p className="testimonial-text">"{testimonials[activeTestimonial]?.text}"</p>
-                  <div className="testimonial-author">
-                    <div className="author-avatar">
-                      {testimonials[activeTestimonial]?.avatar ? (
-                        <img src={testimonials[activeTestimonial].avatar} alt={testimonials[activeTestimonial].name} />
-                      ) : (
-                        <FiUser size={24} />
-                      )}
-                    </div>
-                    <div>
-                      <h4>{testimonials[activeTestimonial]?.name}</h4>
-                      <p>{testimonials[activeTestimonial]?.role}{testimonials[activeTestimonial]?.company ? ` at ${testimonials[activeTestimonial].company}` : ''}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-
-              <button
-                className="carousel-btn next"
-                onClick={() => setActiveTestimonial(prev => (prev + 1) % testimonials.length)}
-              >
-                <FiChevronRight />
-              </button>
-            </div>
-
-            <div className="testimonial-dots">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  className={`dot ${activeTestimonial === index ? 'active' : ''}`}
-                  onClick={() => setActiveTestimonial(index)}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== PARTNERS ===== */}
-      {partners.length > 0 && (
-        <section className="partners-section">
-          <div className="container">
-            <motion.div
-              className="section-header"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <h2>Our Trusted Partners</h2>
-              <p>Collaborating with top organizations for the best real estate experience</p>
-            </motion.div>
-
-            <motion.div
-              className="partners-grid"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              {partners.map((partner, index) => (
-                <div key={partner.id || index} className="partner-card">
-                  {partner.website ? (
-                    <a href={partner.website} target="_blank" rel="noopener noreferrer">
-                      {partner.logo ? (
-                        <img
-                          src={mediaUrl(partner.logo)}
-                          alt={partner.name}
-                          className="partner-logo"
-                        />
-                      ) : (
-                        <div className="partner-name-only">{partner.name}</div>
-                      )}
-                    </a>
-                  ) : (
-                    <>
-                      {partner.logo ? (
-                        <img
-                          src={mediaUrl(partner.logo)}
-                          alt={partner.name}
-                          className="partner-logo"
-                        />
-                      ) : (
-                        <div className="partner-name-only">{partner.name}</div>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== BLOG POSTS ===== */}
-      {blogPosts.length > 0 && (
-        <section className="blog-section">
-          <div className="container">
-            <motion.div
-              className="section-header"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <h2>Latest from Our Blog</h2>
-              <p>Stay updated with real estate news and insights</p>
-            </motion.div>
-
-            <div className="blog-grid">
-              {blogPosts.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  className="blog-card"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                >
-                  <Link to={`/blog/${post.slug}`}>
-                    <div className="blog-image">
-                      {post.coverImage ? (
-                        <img
-                          src={mediaUrl(post.coverImage)}
-                          alt={post.title}
-                        />
-                      ) : (
-                        <div className="blog-image-placeholder">
-                          <FiCalendar size={32} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="blog-content">
-                      {post.category && <span className="blog-category">{post.category}</span>}
-                      <h3>{post.title}</h3>
-                      <p>{post.excerpt || post.content?.substring(0, 120) + '...'}</p>
-                      <span className="blog-date">
-                        <FiCalendar size={14} /> {new Date(post.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
-                      </span>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-
-            <div className="section-cta">
-              <Link to="/blog" className="cta-btn">
-                View All Posts <FiArrowRight />
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ===== CTA BANNER ===== */}
-      <section className="cta-section">
+    return (
+      <section className="blog-section" key="blog">
         <div className="container">
           <motion.div
-            className="cta-content"
+            className="section-header"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
-            <h2>Ready to Find Your Dream Property?</h2>
-            <p>Contact our team today and let us help you find the perfect property in Rourkela and across Odisha.</p>
-            <div className="cta-buttons">
-              <Link to="/list" className="cta-btn primary">
-                Browse Properties <FiArrowRight />
-              </Link>
-              <Link to="/contact" className="cta-btn secondary">
-                Contact Us <FiPhone />
-              </Link>
-            </div>
+            <h2>{sectionValue(section, 'title', 'Latest from Our Blog')}</h2>
+            <p>{sectionValue(section, 'subtitle', 'Stay updated with real estate news and insights')}</p>
           </motion.div>
+
+          <div className="blog-grid">
+            {blogPosts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                className="blog-card"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+              >
+                <Link to={`/blog/${post.slug}`}>
+                  <div className="blog-image">
+                    {post.coverImage ? (
+                      <img
+                        src={mediaUrl(post.coverImage)}
+                        alt={post.title}
+                      />
+                    ) : (
+                      <div className="blog-image-placeholder">
+                        <FiCalendar size={32} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="blog-content">
+                    {post.category && <span className="blog-category">{post.category}</span>}
+                    <h3>{post.title}</h3>
+                    <p>{post.excerpt || post.content?.substring(0, 120) + '...'}</p>
+                    <span className="blog-date">
+                      <FiCalendar size={14} /> {new Date(post.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="section-cta">
+            <Link to="/blog" className="cta-btn">
+              View All Posts <FiArrowRight />
+            </Link>
+          </div>
         </div>
       </section>
+    );
+  };
+
+  const renderCta = (section) => (
+    <section className="cta-section" key="cta">
+      <div className="container">
+        <motion.div
+          className="cta-content"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <h2>{sectionValue(section, 'title', 'Ready to Find Your Dream Property?')}</h2>
+          <p>{sectionValue(section, 'subtitle', 'Contact our team today and let us help you find the perfect property in Rourkela and across Odisha.')}</p>
+          <div className="cta-buttons">
+            <Link to={sanitizeAppPath(section?.buttonLink, '/list')} className="cta-btn primary">
+              {sectionValue(section, 'buttonText', 'Browse Properties')} <FiArrowRight />
+            </Link>
+            <Link to="/contact" className="cta-btn secondary">
+              Contact Us <FiPhone />
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+
+  const renderCustom = (section) => {
+    // Generic content block for admin-created CUSTOM sections
+    if (!section?.title && !section?.content) return null;
+    return (
+      <section className="features-section" key={`custom-${section.key}`}>
+        <div className="container">
+          <motion.div
+            className="section-header"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            {section.title && <h2>{section.title}</h2>}
+            {section.subtitle && <p>{section.subtitle}</p>}
+          </motion.div>
+          {section.content && <div className="custom-section-content"><p>{section.content}</p></div>}
+          {section.buttonText && section.buttonLink && (
+            <div className="section-cta">
+              <Link to={sanitizeAppPath(section.buttonLink, '/list')} className="cta-btn">
+                {section.buttonText} <FiArrowRight />
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // The hero search bar is visible only when a SEARCH section is active.
+  const searchEnabled = sections.some((s) => s.type === 'SEARCH');
+  const ctx = { searchEnabled };
+
+  const renderSection = (section) => {
+    // The 'cities' CUSTOM section keeps its dedicated renderer
+    if (section.type === 'CUSTOM' && section.key === 'cities') return renderCities(section);
+
+    switch (section.type) {
+      case 'HERO': return renderHero(section, ctx);
+      case 'SEARCH': return null; // rendered inside the hero block
+      case 'STATS': return renderStats();
+      case 'FEATURED_PROPERTIES': return renderFeatured(section);
+      case 'SERVICES': return renderServices(section);
+      case 'TESTIMONIALS': return renderTestimonials(section);
+      case 'PARTNERS': return renderPartners(section);
+      case 'BLOG': return renderBlog(section);
+      case 'CTA': return renderCta(section);
+      case 'CUSTOM': return renderCustom(section);
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="homePage">
+      <Seo page="home" />
+      {sections.map((section) => renderSection(section))}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import apiRequest from '../../lib/apiRequest';
 import toast from 'react-hot-toast';
 import { FiFilter, FiX, FiSearch, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { formatPrice, parseImages } from '../../lib/utils';
+import Seo from '../../components/Seo/Seo';
 import './ListPage.scss';
 
 const getCityName = (city) => (typeof city === 'string' ? city : city?.city || '');
@@ -191,6 +192,7 @@ function ListPage() {
 
   return (
     <div className="list-page">
+      <Seo page="properties" />
       <div className="container">
         {/* Page Header */}
         <div className="page-header">

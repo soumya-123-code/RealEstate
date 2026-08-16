@@ -26,6 +26,7 @@ async function main() {
   await prisma.contactRequest.deleteMany();
   await prisma.lead.deleteMany();
   await prisma.seoSetting.deleteMany();
+  await prisma.navItem.deleteMany();
   await prisma.companySettings.deleteMany();
   await prisma.user.deleteMany();
   console.log("✅ Cleared existing data\n");
@@ -679,6 +680,27 @@ async function main() {
     }),
   ]);
   console.log(`✅ Created ${seoSettings.length} SEO settings\n`);
+
+  // ==================== NAVIGATION ====================
+  console.log("🧭 Creating navigation items...");
+  const navItems = await Promise.all([
+    { location: "HEADER", label: "Home", url: "/", order: 1 },
+    { location: "HEADER", label: "Properties", url: "/list", order: 2 },
+    { location: "HEADER", label: "Explore", url: "/explore", order: 3 },
+    { location: "HEADER", label: "About", url: "/about", order: 4 },
+    { location: "HEADER", label: "Contact", url: "/contact", order: 5 },
+    { location: "HEADER", label: "Blog", url: "/blog", order: 6 },
+    { location: "HEADER", label: "FAQ", url: "/faq", order: 7 },
+    { location: "FOOTER", label: "Home", url: "/", order: 1 },
+    { location: "FOOTER", label: "Properties", url: "/list", order: 2 },
+    { location: "FOOTER", label: "About Us", url: "/about", order: 3 },
+    { location: "FOOTER", label: "Contact Us", url: "/contact", order: 4 },
+    { location: "FOOTER", label: "Blog", url: "/blog", order: 5 },
+    { location: "FOOTER", label: "FAQ", url: "/faq", order: 6 },
+    { location: "FOOTER", label: "Privacy Policy", url: "/privacy", order: 7 },
+    { location: "FOOTER", label: "Terms & Conditions", url: "/terms", order: 8 },
+  ].map((item) => prisma.navItem.create({ data: item })));
+  console.log(`✅ Created ${navItems.length} navigation items\n`);
 
   // ==================== USERS ====================
   console.log("👥 Creating users...");

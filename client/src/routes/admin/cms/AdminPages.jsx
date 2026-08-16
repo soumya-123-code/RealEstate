@@ -55,11 +55,7 @@ function AdminPages() {
 
   return (
     <div className="cms-page">
-      <div className="cms-toolbar">
-        <div>
-          <h2 className="cms-toolbar__title">Website Pages</h2>
-          <p className="cms-toolbar__sub">Compose and publish public page layouts</p>
-        </div>
+      <div className="cms-toolbar cms-toolbar--actions">
         <div className="cms-toolbar__actions">
           <button type="button" className="cms-btn cms-btn--ghost" onClick={fetchPages}>
             <FiRefreshCw size={15} /> Refresh
@@ -100,6 +96,7 @@ function AdminPages() {
             return (
               <article key={page.key || page.id} className="cms-card">
                 <h3 className="cms-card__title">{page.title}</h3>
+                {page.description && <p className="cms-card__desc">{page.description}</p>}
                 <div className="cms-card__meta">
                   <span>
                     Key: <code>{page.key}</code>
@@ -120,7 +117,7 @@ function AdminPages() {
                   {page.isPublished ? 'Published' : 'Draft'}
                 </button>
                 <div className="cms-card__actions">
-                  <Link to={`/admin/pages/${page.key}`} className="cms-btn cms-btn--primary">
+                  <Link to={`/admin/cms/pages/${page.key}`} className="cms-btn cms-btn--primary">
                     <FiEdit2 size={14} /> Edit sections
                   </Link>
                   <a

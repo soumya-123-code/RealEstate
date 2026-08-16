@@ -3,8 +3,14 @@ import prisma from "../lib/prisma.js";
 
 const ADMIN_PANEL_PERMISSION = "ADMIN_PANEL";
 
+/**
+ * Explicit Authorization header wins over the cookie.
+ * Cookies are scoped per hostname (not per port), so a stale cookie from
+ * another session on the same host must never override the token the client
+ * explicitly sends — otherwise requests are authenticated as the wrong user.
+ */
 const extractToken = (req) =>
-  req.cookies?.token || req.headers.authorization?.split(" ")[1] || null;
+  req.headers.authorization?.split(" ")[1] || req.cookies?.token || null;
 
 const attachPayload = (req, payload) => {
   req.userId = payload.id;

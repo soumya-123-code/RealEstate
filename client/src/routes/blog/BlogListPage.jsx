@@ -4,6 +4,7 @@ import apiRequest from '../../lib/apiRequest';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiUser, FiArrowRight, FiSearch, FiTag } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import Seo from '../../components/Seo/Seo';
 import './BlogListPage.scss';
 
 function BlogListPage() {
@@ -66,6 +67,7 @@ function BlogListPage() {
 
   return (
     <div className="blog-list-page">
+      <Seo page="blog" />
       {/* Hero Section */}
       <section className="blog-hero">
         <div className="hero-overlay" />

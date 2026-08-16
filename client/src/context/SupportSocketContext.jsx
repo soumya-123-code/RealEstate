@@ -27,7 +27,7 @@ function playRingtone() {
       playTone(523, t, 0.25);
       playTone(659, t + 0.25, 0.25);
     }
-  } catch (_) {}
+  } catch(_) { /* intentionally ignored */ }
 }
 
 function playCallEndSound() {
@@ -43,7 +43,7 @@ function playCallEndSound() {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
     osc.start();
     osc.stop(ctx.currentTime + 0.4);
-  } catch (_) {}
+  } catch(_) { /* intentionally ignored */ }
 }
 
 export const SupportSocketContextProvider = ({ children }) => {

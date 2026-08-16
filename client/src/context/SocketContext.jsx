@@ -27,7 +27,7 @@ function playNotificationSound() {
     const t = ctx.currentTime;
     playTone(880, t, 0.15);
     playTone(1100, t + 0.12, 0.18, 0.2);
-  } catch (_) {}
+  } catch(_) { /* intentionally ignored */ }
 }
 
 // ── Ring tone (for incoming calls) ────────────────────────────────────────────
@@ -84,6 +84,8 @@ export const SocketContextProvider = ({ children }) => {
   const ringCleanupRef   = useRef(null);
   const ringAudioCtxRef  = useRef(null);
   const pendingCandidates = useRef([]);
+  const callStateRef     = useRef(callState);
+  callStateRef.current = callState;
 
   // ── Socket setup ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -93,8 +95,9 @@ export const SocketContextProvider = ({ children }) => {
       auth: { token: localStorage.getItem("token") },
       transports: ["websocket", "polling"],
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
     });
 
     sock.on("connect", () => {
@@ -119,6 +122,10 @@ export const SocketContextProvider = ({ children }) => {
     sock.on("getMessage", (data) => {
       const incomingChatId = Number(data.chatId);
       const isActiveChat   = activeChatIdRef.current === incomingChatId;
+
+      // The server echoes the sender's own messages to their other tabs;
+      // never toast for your own message.
+      if (String(data.userId) === String(currentUser.id)) return;
 
       if (!isActiveChat) {
         setChatNotifications((prev) => {
@@ -233,7 +240,32 @@ export const SocketContextProvider = ({ children }) => {
       toast("User is busy", { icon: "🔴" });
     });
 
-    sock.on("disconnect", () => console.log("Socket disconnected"));
+    sock.on("call-user-offline", ({ targetUserId } = {}) => {
+      console.log("[WebRTC] Call target offline:", targetUserId);
+      _cleanupCall();
+      toast("User is not online right now", { icon: "📴" });
+    });
+
+    sock.on("call-user-disconnected", ({ userId } = {}) => {
+      const cs = callStateRef.current;
+      if (cs.status !== "idle" && String(userId) === String(cs.remoteUser?.id)) {
+        console.log("[WebRTC] Remote user disconnected mid-call");
+        _cleanupCall();
+        toast("The other user disconnected", { icon: "📵" });
+      }
+    });
+
+    sock.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+      // Keep call state sane across transient socket drops
+      if (reason === "io server disconnect" || reason === "transport close") {
+        const cs = callStateRef.current;
+        if (cs.status === "calling" || cs.status === "ringing") {
+          _cleanupCall();
+          toast("Connection lost", { icon: "⚠️" });
+        }
+      }
+    });
     sock.on("connect_error", (err) => console.error("Socket error:", err.message));
 
     setSocket(sock);
@@ -396,7 +428,7 @@ export const SocketContextProvider = ({ children }) => {
     _cleanupCall();
   }, [callState, socket, _cleanupCall]);
 
-  const endCall = useCallback(() => {
+  const endCall = useCallback((durationSeconds = 0) => {
     if (callState.remoteUser && socket) {
       socket.emit("call-end", {
         targetUserId: callState.remoteUser.id,
@@ -404,6 +436,7 @@ export const SocketContextProvider = ({ children }) => {
         callerId: callState.isIncoming ? callState.remoteUser.id : currentUser?.id,
         receiverId: callState.isIncoming ? currentUser?.id : callState.remoteUser.id,
         callType: callState.type,
+        duration: Math.max(0, Math.round(durationSeconds) || 0),
       });
     }
     _cleanupCall();

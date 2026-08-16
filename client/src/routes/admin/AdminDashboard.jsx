@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import './AdminDashboard.scss';
 
 function AdminDashboard() {
-  const { currentUser, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const [stats, setStats] = useState(null);
   const [recentBookings, setRecentBookings] = useState([]);
   const [recentLeads, setRecentLeads] = useState([]);
@@ -25,7 +25,7 @@ function AdminDashboard() {
       try {
         const leadsRes = await apiRequest.get('/cms/admin/leads');
         setRecentLeads((leadsRes.data || []).slice(0, 5));
-      } catch {}
+      } catch { /* intentionally ignored */ }
     } catch {
       toast.error('Failed to load dashboard data');
     } finally {
@@ -53,13 +53,6 @@ function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <div className="page-header">
-        <div>
-          <h1>Dashboard</h1>
-          <p>Welcome back, <strong>{currentUser?.username}</strong>! Here's your real estate overview.</p>
-        </div>
-      </div>
-
       {/* Stat Cards */}
       <div className="stats-grid">
         {STAT_CARDS.map(({ icon: Icon, color, value, label, sub }) => (

@@ -26,6 +26,8 @@ import {
   getAnalytics,
   // Homepage
   getHomepageData,
+  // Navigation
+  getNavItems, getAllNavItems, createNavItem, updateNavItem, deleteNavItem,
 } from "../controllers/cms.controller.js";
 import { verifyToken, verifyAdmin, requireManageCms } from "../middleware/verifyToken.js";
 import {
@@ -57,6 +59,7 @@ router.get("/partners", getPartners);
 router.get("/blog", getBlogPosts);
 router.get("/blog/:slug", getBlogPost);
 router.get("/agents", getAgents);
+router.get("/navigation", getNavItems);
 router.get("/seo/:page", getSeoSetting);
 router.post("/contact", createContactRequest);
 router.post("/leads", createLead);
@@ -114,6 +117,13 @@ router.get("/admin/agents", ...adminRead, getAllAgents);
 router.post("/admin/agents", ...adminWrite, createAgent);
 router.put("/admin/agents/:id", ...adminWrite, updateAgent);
 router.delete("/admin/agents/:id", ...adminWrite, deleteAgent);
+
+// Navigation (header / footer links)
+router.get("/admin/navigation", ...adminRead, getAllNavItems);
+router.post("/admin/navigation", ...adminWrite, createNavItem);
+router.put("/admin/navigation/:id", ...adminWrite, updateNavItem);
+router.patch("/admin/navigation/:id", ...adminWrite, updateNavItem);
+router.delete("/admin/navigation/:id", ...adminWrite, deleteNavItem);
 
 // Leads
 router.get("/admin/leads", ...adminRead, getLeads);

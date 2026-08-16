@@ -71,11 +71,7 @@ function AdminContacts() {
 
   return (
     <div className="cms-page">
-      <div className="cms-toolbar">
-        <div>
-          <h2 className="cms-toolbar__title">Contact Requests</h2>
-          <p className="cms-toolbar__sub">Messages from the public contact form</p>
-        </div>
+      <div className="cms-toolbar cms-toolbar--actions">
         <div className="cms-toolbar__actions">
           <button type="button" className="cms-btn cms-btn--ghost" onClick={fetchItems}>
             <FiRefreshCw size={15} /> Refresh

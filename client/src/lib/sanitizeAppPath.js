@@ -17,13 +17,12 @@ export function sanitizeAppPath(raw, fallback = '/list') {
     return fallback;
   }
 
-  // Legacy list alias
-  if (
-    link === '/properties' ||
-    link.startsWith('/properties?') ||
-    link.startsWith('/properties/')
-  ) {
+  // Legacy aliases — /properties and /properties?… map to /list,
+  // but /properties/:id is a property detail and must map to /property/:id
+  if (link === '/properties' || link.startsWith('/properties?')) {
     link = link.replace(/^\/properties/, '/list');
+  } else if (link.startsWith('/properties/')) {
+    link = `/property/${link.slice('/properties/'.length)}`;
   }
 
   // Legacy query param name
@@ -39,13 +38,15 @@ export function sanitizeAppPath(raw, fallback = '/list') {
     '/contact',
     '/blog',
     '/faq',
+    '/privacy',
+    '/terms',
     '/login',
     '/register',
     '/bookings',
     '/chat',
     '/profile',
   ]);
-  const allowedPrefixes = ['/property/', '/blog/', '/list'];
+  const allowedPrefixes = ['/property/', '/blog/'];
 
   const isAllowed =
     allowedExact.has(pathOnly) ||

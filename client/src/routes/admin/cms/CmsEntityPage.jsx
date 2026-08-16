@@ -15,6 +15,7 @@ const emptyFromFields = (fields) =>
   fields.reduce((acc, f) => {
     if (f.type === 'boolean') acc[f.key] = true;
     else if (f.type === 'number') acc[f.key] = 0;
+    else if (f.type === 'select') acc[f.key] = f.options?.[0]?.value ?? '';
     else acc[f.key] = '';
     return acc;
   }, {});
@@ -182,11 +183,7 @@ function CmsEntityPage({ entityKey }) {
 
   return (
     <div className="cms-page">
-      <div className="cms-toolbar">
-        <div>
-          <h2 className="cms-toolbar__title">{config.title}</h2>
-          <p className="cms-toolbar__sub">{config.subtitle}</p>
-        </div>
+      <div className="cms-toolbar cms-toolbar--actions">
         <div className="cms-toolbar__actions">
           <button type="button" className="cms-btn cms-btn--ghost" onClick={fetchItems}>
             <FiRefreshCw size={15} /> Refresh
@@ -350,6 +347,16 @@ function CmsEntityPage({ entityKey }) {
                       />
                       Enabled
                     </label>
+                  ) : f.type === 'select' ? (
+                    <select
+                      id={`cms-${f.key}`}
+                      value={form[f.key] ?? ''}
+                      onChange={(e) => setField(f.key, e.target.value)}
+                    >
+                      {(f.options || []).map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
                   ) : f.type === 'image' ? (
                     <div className="cms-image-field">
                       <input

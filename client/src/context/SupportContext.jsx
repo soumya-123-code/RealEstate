@@ -36,7 +36,7 @@ const pushToNative = (payload) => {
     if (window.ReactNativeWebView?.postMessage) {
       window.ReactNativeWebView.postMessage(JSON.stringify(payload));
     }
-  } catch (_) {}
+  } catch(_) { /* intentionally ignored */ }
 };
 
 export const SupportContextProvider = ({ children }) => {
@@ -219,7 +219,7 @@ export const SupportContextProvider = ({ children }) => {
   const markMessageRead = useCallback(async (conversationId, messageId) => {
     try {
       await apiRequest.post(`/support/conversations/${conversationId}/messages/${messageId}/read`);
-    } catch (_) {}
+    } catch(_) { /* intentionally ignored */ }
   }, []);
 
   // ========================================
@@ -231,7 +231,7 @@ export const SupportContextProvider = ({ children }) => {
       setConversations((prev) =>
         prev.map((c) => (c.id === conversationId ? { ...c, staffUnreadCount: 0 } : c))
       );
-    } catch (_) {}
+    } catch(_) { /* intentionally ignored */ }
   }, []);
 
   // ========================================

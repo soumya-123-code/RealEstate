@@ -114,15 +114,13 @@ export const MessageAttachment = memo(function MessageAttachment({
   isOwn,
   onImageClick,
 }) {
-  if (!attachment) return null;
-
-  const fileUrl = attachment.url || attachment.fileUrl;
-  const fileName = attachment.name || attachment.fileName || "File";
-  const fileSize = attachment.size || attachment.fileSize;
-  const mimeType = attachment.mimeType || attachment.type || "";
+  const fileUrl = attachment?.url || attachment?.fileUrl;
+  const fileName = attachment?.name || attachment?.fileName || "File";
+  const fileSize = attachment?.size || attachment?.fileSize;
+  const mimeType = attachment?.mimeType || attachment?.type || "";
   const fileType =
-    attachment.fileType || getFileTypeFromUrl(fileUrl);
-  const thumbnail = attachment.thumbnail || attachment.thumbUrl;
+    attachment?.fileType || getFileTypeFromUrl(fileUrl);
+  const thumbnail = attachment?.thumbnail || attachment?.thumbUrl;
 
   const handleClick = useCallback(() => {
     if (!fileUrl) return;
@@ -141,6 +139,8 @@ export const MessageAttachment = memo(function MessageAttachment({
       document.body.removeChild(link);
     }
   }, [fileUrl, fileType, fileName, onImageClick]);
+
+  if (!attachment) return null;
 
   // Image attachment
   if (fileType === "image") {

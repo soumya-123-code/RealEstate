@@ -53,6 +53,18 @@ $cms-shadow: 0 2px 12px rgba(23, 50, 77, 0.06);
   }
 }
 
+/**
+ * Actions-only toolbar: the admin topbar already shows the page title and
+ * subtitle, so inner pages only need the action buttons, right-aligned.
+ */
+.cms-toolbar--actions {
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .cms-btn {
   display: inline-flex;
   align-items: center;
@@ -484,6 +496,13 @@ $cms-shadow: 0 2px 12px rgba(23, 50, 77, 0.06);
     color: $cms-navy;
   }
 
+  &__desc {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: $cms-muted;
+  }
+
   &__meta {
     display: flex;
     flex-wrap: wrap;
@@ -510,10 +529,74 @@ $cms-shadow: 0 2px 12px rgba(23, 50, 77, 0.06);
 }
 
 // Section list (AdminPageEditor)
+.cms-list-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: $cms-muted;
+  background: $cms-cream;
+  border: 1px solid $cms-border;
+  border-radius: 8px;
+
+  strong { color: $cms-navy; }
+  svg { flex-shrink: 0; color: $cms-gold; }
+}
+
 .cms-section-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+// Rows for sections hidden from the website are visually muted
+.cms-section-row.is-hidden {
+  background: $cms-cream;
+  border-style: dashed;
+
+  .cms-section-row__info strong {
+    color: $cms-muted;
+    text-decoration: line-through;
+    text-decoration-color: rgba(107, 122, 140, 0.5);
+  }
+}
+
+// Eye toggle — controls whether a section renders on the customer site
+.cms-visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &.visible {
+    background: rgba(47, 107, 79, 0.08);
+    border-color: rgba(47, 107, 79, 0.25);
+    color: $cms-success;
+
+    &:hover { background: rgba(47, 107, 79, 0.15); }
+  }
+
+  &.hidden {
+    background: $cms-cream-deep;
+    border-color: $cms-border;
+    color: $cms-muted;
+
+    &:hover { color: $cms-danger; border-color: rgba(163, 59, 59, 0.35); }
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 .cms-section-row {

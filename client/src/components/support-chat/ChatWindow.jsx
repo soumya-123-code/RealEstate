@@ -511,6 +511,12 @@ export default function ChatWindow({
           new Date(msg.createdAt).getMinutes() &&
         new Date(prev.createdAt).getHours() ===
           new Date(msg.createdAt).getHours();
+      const sameMinuteAsNext =
+        next &&
+        new Date(next.createdAt).getMinutes() ===
+          new Date(msg.createdAt).getMinutes() &&
+        new Date(next.createdAt).getHours() ===
+          new Date(msg.createdAt).getHours();
 
       return {
         ...msg,

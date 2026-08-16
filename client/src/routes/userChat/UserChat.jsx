@@ -7,8 +7,8 @@ import { format } from 'timeago.js';
 import {
   FiSend, FiSearch, FiMessageCircle, FiPhone, FiVideo,
   FiSmile, FiCheck, FiCheckSquare, FiX, FiArrowLeft,
-  FiMic, FiMicOff, FiVideoOff, FiPhoneOff, FiPhoneIncoming,
-  FiEdit, FiMoreVertical, FiUser
+  FiMic, FiMicOff, FiVideoOff, FiPhoneOff,
+  FiEdit
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import './UserChat.scss';
@@ -239,7 +239,7 @@ function ActiveCallOverlay({ callState, onEnd, localStreamRef, toggleMute, toggl
               {camOff ? <FiVideoOff size={20} /> : <FiVideo size={20} />}
             </button>
           )}
-          <button className="uc-ctrl-btn uc-ctrl-btn--end" onClick={onEnd} title="End Call">
+          <button className="uc-ctrl-btn uc-ctrl-btn--end" onClick={() => onEnd(duration)} title="End Call">
             <FiPhoneOff size={20} />
           </button>
         </div>
@@ -308,12 +308,15 @@ export default function UserChat() {
   }, [messages]);
 
   // Load chat list
+  const [chatsError, setChatsError] = useState(false);
   const loadChats = useCallback(async () => {
     try {
       const res = await apiRequest.get('/chats');
       setChats(res.data || []);
+      setChatsError(false);
     } catch (err) {
       console.error('loadChats:', err);
+      setChatsError(true);
     } finally {
       setLoadingChats(false);
     }
@@ -328,14 +331,19 @@ export default function UserChat() {
       const inChatId = Number(data.chatId);
       const cur = selectedChatRef.current;
       if (cur && Number(cur.id) === inChatId) {
-        setMessages(prev => [...prev, {
-          id       : data.id || `sock_${Date.now()}`,
-          text     : data.text,
-          userId   : Number(data.userId),
-          chatId   : inChatId,
-          createdAt: data.createdAt || new Date().toISOString(),
-          user     : { username: data.senderName, avatar: data.senderAvatar },
-        }]);
+        setMessages(prev => {
+          // Dedupe by id — the same message can arrive via socket echo
+          // while the saved row is already in the list.
+          if (data.id != null && prev.some(m => m.id === data.id)) return prev;
+          return [...prev, {
+            id       : data.id ?? `sock_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            text     : data.text,
+            userId   : Number(data.userId),
+            chatId   : inChatId,
+            createdAt: data.createdAt || new Date().toISOString(),
+            user     : { username: data.senderName, avatar: data.senderAvatar },
+          }];
+        });
         apiRequest.put(`/chats/read/${inChatId}`).catch(() => {});
       }
       loadChatsRef.current?.();
@@ -467,7 +475,7 @@ export default function UserChat() {
         <IncomingCallModal callState={callState} onAnswer={answerCall} onReject={rejectCall} />
       )}
       {callState.status === 'calling' && (
-        <CallingOverlay callState={callState} onCancel={endCall} />
+        <CallingOverlay callState={callState} onCancel={() => endCall(0)} />
       )}
       {callState.status === 'in-call' && (
         <ActiveCallOverlay
@@ -507,6 +515,14 @@ export default function UserChat() {
           <div className="uc-sidebar__list">
             {loadingChats ? (
               <div className="uc-placeholder"><div className="uc-spinner" /></div>
+            ) : chatsError ? (
+              <div className="uc-placeholder uc-placeholder--empty">
+                <FiMessageCircle size={30} />
+                <p>Couldn&apos;t load conversations</p>
+                <button className="uc-start-btn" onClick={() => { setLoadingChats(true); loadChats(); }}>
+                  Try again
+                </button>
+              </div>
             ) : filteredChats.length === 0 ? (
               <div className="uc-placeholder uc-placeholder--empty">
                 <FiMessageCircle size={30} />

@@ -1,37 +1,48 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSocket } from '../../context/SocketContext';
+import { useSite } from '../../context/SiteContext';
 import {
   FiX, FiSun, FiMoon, FiUser, FiLogOut, FiHome, FiList,
   FiInfo, FiMail, FiMap, FiChevronDown, FiBookOpen, FiHelpCircle,
-  FiMessageCircle, FiCalendar, FiUsers, FiGrid,
+  FiMessageCircle, FiCalendar, FiUsers, FiGrid, FiLink,
 } from 'react-icons/fi';
 import NotificationBell from '../NotificationBell/NotificationBell';
 import BrandLogo from '../BrandLogo/BrandLogo';
-import apiRequest from '../../lib/apiRequest';
 import { ROLES, hasAdminPanelAccess } from '../../lib/auth';
+import { sanitizeAppPath } from '../../lib/sanitizeAppPath';
 import './Navbar.scss';
+
+/** Icon for a CMS nav link, chosen from its destination. */
+const navIconFor = (url) => {
+  const path = String(url || '').split('?')[0];
+  if (path === '/') return FiHome;
+  if (path.startsWith('/list')) return FiList;
+  if (path.startsWith('/explore')) return FiMap;
+  if (path.startsWith('/about')) return FiInfo;
+  if (path.startsWith('/contact')) return FiMail;
+  if (path.startsWith('/blog')) return FiBookOpen;
+  if (path.startsWith('/faq')) return FiHelpCircle;
+  return FiLink;
+};
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [companySettings, setCompanySettings] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(false);
   const { currentUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { totalUnread } = useSocket();
+  const { settings: companySettings, headerNav } = useSite();
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
 
   const companyName = companySettings?.companyName || 'Suretreaven';
   const role = currentUser?.role;
-
-  useEffect(() => {
-    fetchCompanySettings();
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 16);
@@ -97,20 +108,18 @@ function Navbar() {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-  /** Public marketing links — always available on the customer site. */
-  const publicLinks = [
-    { to: '/', label: 'Home', icon: FiHome },
-    { to: '/list', label: 'Properties', icon: FiList },
-    { to: '/explore', label: 'Explore', icon: FiMap },
-    { to: '/about', label: 'About', icon: FiInfo },
-    { to: '/contact', label: 'Contact', icon: FiMail },
-  ];
-
-  /** Extra public links shown on desktop when space allows / in mobile. */
-  const secondaryPublicLinks = [
-    { to: '/blog', label: 'Blog', icon: FiBookOpen },
-    { to: '/faq', label: 'FAQ', icon: FiHelpCircle },
-  ];
+  /**
+   * Public marketing links come from the CMS (Admin → Website → Navigation).
+   * Only safe in-app destinations are kept — auth routes below always stay
+   * under application control and can never be injected from the CMS.
+   */
+  const publicLinks = headerNav
+    .filter((item) => item.label && item.url)
+    .slice(0, 7)
+    .map((item) => {
+      const to = sanitizeAppPath(item.url, '/');
+      return { to, label: item.label, icon: navIconFor(item.url) };
+    });
 
   /** Role-specific account links (authenticated). */
   const getRoleLinks = () => {
@@ -148,7 +157,7 @@ function Navbar() {
   const desktopCenterLinks =
     currentUser && (role === ROLES.ADMIN || role === ROLES.AGENT || hasAdminPanelAccess(currentUser))
       ? roleLinks
-      : [...publicLinks, ...secondaryPublicLinks];
+      : publicLinks;
 
   return (
     <nav className={`navbar${scrolled ? ' scrolled' : ''}`} aria-label="Main">
@@ -258,78 +267,88 @@ function Navbar() {
         </div>
       </div>
 
-      <div
-        className={`mobile-overlay${menuOpen ? ' active' : ''}`}
-        onClick={closeMenu}
-        aria-hidden="true"
-      />
-
-      <div className={`mobile-menu${menuOpen ? ' open' : ''}`} aria-hidden={!menuOpen}>
-        <div className="mobile-menu-header">
-          <BrandLogo
-            name={companyName}
-            tagline="Find · Book · Build · Belong"
-            size="sm"
+      {/*
+        Mobile drawer renders through a portal: the navbar uses backdrop-filter,
+        which creates a containing block that would otherwise clip these
+        position:fixed layers to the 76px header strip.
+      */}
+      {createPortal(
+        <>
+          <div
+            className={`mobile-overlay${menuOpen ? ' active' : ''}`}
             onClick={closeMenu}
+            aria-hidden="true"
           />
-          <button type="button" className="close-btn" onClick={closeMenu} aria-label="Close menu">
-            <FiX size={22} />
-          </button>
-        </div>
 
-        <div className="mobile-menu-body">
-          <div className="mobile-nav-section">
-            <p className="section-label">Explore</p>
-            {[...publicLinks, ...secondaryPublicLinks].map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                className={`mobile-nav-link${isActive(to) ? ' active' : ''}`}
+          <div className={`mobile-menu${menuOpen ? ' open' : ''}`} aria-hidden={!menuOpen}>
+            <div className="mobile-menu-header">
+              <BrandLogo
+                name={companyName}
+                tagline="Find · Book · Build · Belong"
+                inverted
                 onClick={closeMenu}
-              >
-                <Icon size={18} /> {label}
-              </Link>
-            ))}
-          </div>
-
-          {currentUser ? (
-            <div className="mobile-nav-section">
-              <p className="section-label">Account</p>
-              {roleLinks.map(({ to, label, icon: Icon, badge }) => (
-                <Link
-                  key={to + label}
-                  to={to}
-                  className={`mobile-nav-link${isActive(to) ? ' active' : ''}`}
-                  onClick={closeMenu}
-                >
-                  <Icon size={18} /> {label}
-                  {badge > 0 && (
-                    <span className="nav-chat-badge" style={{ marginLeft: 6 }}>
-                      {badge > 9 ? '9+' : badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
-              <button type="button" className="mobile-nav-link logout" onClick={handleLogout}>
-                <FiLogOut size={18} /> Logout
+              />
+              <button type="button" className="close-btn" onClick={closeMenu} aria-label="Close menu">
+                <FiX size={22} />
               </button>
             </div>
-          ) : (
-            <div className="mobile-nav-section">
-              <p className="section-label">Account</p>
-              <Link to="/login" className="btn btn-outline btn-block" onClick={closeMenu}>Login</Link>
-              <Link to="/register" className="btn btn-primary btn-block" onClick={closeMenu}>Sign Up</Link>
-            </div>
-          )}
 
-          <div className="mobile-menu-footer">
-            <button type="button" className="theme-toggle-btn" onClick={toggleTheme}>
-              {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
-              <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
-            </button>
+            <div className="mobile-menu-body">
+              <div className="mobile-nav-section">
+                <p className="section-label">Explore</p>
+                {publicLinks.map(({ to, label, icon: Icon }) => (
+                  <Link
+                    key={to + label}
+                    to={to}
+                    className={`mobile-nav-link${isActive(to) ? ' active' : ''}`}
+                    onClick={closeMenu}
+                  >
+                    <Icon size={18} /> {label}
+                  </Link>
+                ))}
+              </div>
+
+              {currentUser ? (
+                <div className="mobile-nav-section">
+                  <p className="section-label">Account</p>
+                  {roleLinks.map(({ to, label, icon: Icon, badge }) => (
+                    <Link
+                      key={to + label}
+                      to={to}
+                      className={`mobile-nav-link${isActive(to) ? ' active' : ''}`}
+                      onClick={closeMenu}
+                    >
+                      <Icon size={18} /> {label}
+                      {badge > 0 && (
+                        <span className="nav-chat-badge" style={{ marginLeft: 6 }}>
+                          {badge > 9 ? '9+' : badge}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                  <button type="button" className="mobile-nav-link logout" onClick={handleLogout}>
+                    <FiLogOut size={18} /> Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="mobile-nav-section">
+                  <p className="section-label">Account</p>
+                  <Link to="/login" className="btn btn-outline btn-block" onClick={closeMenu}>Login</Link>
+                  <Link to="/register" className="btn btn-primary btn-block" onClick={closeMenu}>Sign Up</Link>
+                </div>
+              )}
+
+              <div className="mobile-menu-footer">
+                <button type="button" className="theme-toggle-btn" onClick={toggleTheme}>
+                  {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
+                  <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>,
+        document.body
+      )}
     </nav>
   );
 }

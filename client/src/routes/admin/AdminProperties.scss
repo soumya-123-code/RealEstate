@@ -28,7 +28,7 @@
       align-items: center;
       gap: 8px;
       padding: 12px 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #2c3e6b 0%, #1e2a45 100%);
       color: white;
       border: none;
       border-radius: 8px;
@@ -62,12 +62,12 @@
       transition: all 0.3s;
 
       &:hover {
-        border-color: #667eea;
-        color: #667eea;
+        border-color: #2c3e6b;
+        color: #2c3e6b;
       }
 
       &.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #2c3e6b 0%, #1e2a45 100%);
         color: white;
         border-color: transparent;
       }
@@ -230,7 +230,7 @@
             outline: none;
 
             &:focus {
-              border-color: #667eea;
+              border-color: #2c3e6b;
             }
           }
 
@@ -506,7 +506,7 @@
         transition: border-color 0.3s;
 
         &:focus {
-          border-color: #667eea;
+          border-color: #2c3e6b;
         }
       }
 
@@ -524,7 +524,7 @@
         input[type="checkbox"] {
           width: 18px;
           height: 18px;
-          accent-color: #2e7d32;
+          accent-color: var(--primary, #17324d);
         }
       }
     }
@@ -588,7 +588,7 @@
       .btn-apply-filters {
         flex: 1;
         padding: 12px;
-        background: linear-gradient(135deg, #2e7d32, #66bb6a);
+        background: linear-gradient(135deg, #17324d, #2d5a7b);
         color: white;
         border: none;
         border-radius: 8px;
@@ -628,7 +628,7 @@
 
     .btn-primary {
       padding: 10px 24px;
-      background: linear-gradient(135deg, #2e7d32, #66bb6a);
+      background: linear-gradient(135deg, #17324d, #2d5a7b);
       color: white;
       border: none;
       border-radius: 8px;
@@ -676,7 +676,7 @@
     outline: none;
 
     &:focus {
-      border-color: #2e7d32;
+      border-color: var(--primary, #17324d);
     }
   }
 
@@ -692,7 +692,7 @@
     justify-content: center;
     width: 18px;
     height: 18px;
-    background: #2e7d32;
+    background: var(--primary, #17324d);
     color: white;
     border-radius: 50%;
     font-size: 11px;
@@ -718,14 +718,14 @@
       transition: all 0.25s;
 
       &:hover:not(:disabled) {
-        border-color: #2e7d32;
-        color: #2e7d32;
+        border-color: var(--primary, #17324d);
+        color: var(--primary, #17324d);
       }
 
       &.active {
-        background: #2e7d32;
+        background: var(--primary, #17324d);
         color: white;
-        border-color: #2e7d32;
+        border-color: var(--primary, #17324d);
       }
 
       &:disabled {

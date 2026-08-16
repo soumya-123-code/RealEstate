@@ -88,23 +88,45 @@ io.use((socket, next) => {
   }
 });
 
-// userId (string) → socketId (string)
+// userId (string) → Set<socketId> — a user may be online in several tabs
 const onlineUsers = new Map();
+// socketId → userId (string)
+const socketUserMap = new Map();
+// userId (string) → role (from verified JWT)
+const userRoles = new Map();
+// userIds currently in a WebRTC call
+const busyUsers = new Set();
 
-const addUser = (userId, socketId) => {
-  onlineUsers.set(String(userId), socketId);
+const addUser = (userId, socketId, role) => {
+  const uid = String(userId);
+  if (!onlineUsers.has(uid)) onlineUsers.set(uid, new Set());
+  onlineUsers.get(uid).add(socketId);
+  socketUserMap.set(socketId, uid);
+  if (role) userRoles.set(uid, role);
 };
 
 const removeUser = (socketId) => {
-  for (const [userId, sockId] of onlineUsers.entries()) {
-    if (sockId === socketId) {
-      onlineUsers.delete(userId);
-      break;
+  const uid = socketUserMap.get(socketId);
+  socketUserMap.delete(socketId);
+  if (!uid) return;
+  const sockets = onlineUsers.get(uid);
+  if (sockets) {
+    sockets.delete(socketId);
+    if (sockets.size === 0) {
+      onlineUsers.delete(uid);
+      userRoles.delete(uid);
+      busyUsers.delete(uid);
     }
   }
 };
 
-const getSocketId = (userId) => onlineUsers.get(String(userId));
+const getSocketIds = (userId) => Array.from(onlineUsers.get(String(userId)) ?? []);
+
+const emitToUser = (userId, event, payload) => {
+  for (const socketId of getSocketIds(userId)) {
+    io.to(socketId).emit(event, payload);
+  }
+};
 
 const getOnlineUserIds = () => Array.from(onlineUsers.keys());
 
@@ -115,47 +137,56 @@ io.on("connection", (socket) => {
   socket.on("newUser", () => {
     const uid = String(socket.userId);
     if (!uid) return;
-    addUser(uid, socket.id);
+    addUser(uid, socket.id, socket.userRole);
     console.log(`[Socket] User online: ${uid} → ${socket.id} (total: ${onlineUsers.size})`);
     io.emit("getOnlineUsers", getOnlineUserIds());
   });
 
   // ── 2. Chat messages ────────────────────────────────────────────
+  // REST is the persistence path; the socket only relays. The sender id
+  // always comes from the verified JWT so a client cannot impersonate
+  // another user in realtime payloads.
   socket.on("sendMessage", (payload) => {
     let receiverId, messageData;
-    if (payload.data) {
+    if (payload?.data) {
       receiverId = payload.receiverId;
       messageData = payload.data;
     } else {
-      receiverId = payload.receiverId;
+      receiverId = payload?.receiverId;
       messageData = payload;
     }
-    const receiverSocketId = getSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("getMessage", messageData);
-      console.log(`[Socket] Message → receiver ${receiverId}`);
-    } else {
-      console.log(`[Socket] Receiver ${receiverId} offline, saved to DB only`);
+    if (!receiverId || !messageData || typeof messageData !== "object") return;
+
+    const relay = {
+      ...messageData,
+      userId: socket.userId,
+    };
+
+    emitToUser(receiverId, "getMessage", relay);
+    // Sync the sender's own other tabs (clients dedupe by message id)
+    for (const socketId of getSocketIds(socket.userId)) {
+      if (socketId !== socket.id) io.to(socketId).emit("getMessage", relay);
     }
+    console.log(`[Socket] Message → receiver ${receiverId}`);
   });
 
   // ── 3. Typing indicator ─────────────────────────────────────────
-  socket.on("typing", ({ receiverId, chatId, isTyping, senderName }) => {
-    const receiverSocketId = getSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("userTyping", {
-        chatId: Number(chatId),
-        senderId: socket.userId,
-        senderName: senderName || "User",
-        isTyping: Boolean(isTyping),
-      });
-    }
+  socket.on("typing", ({ receiverId, chatId, isTyping, senderName } = {}) => {
+    if (!receiverId) return;
+    emitToUser(receiverId, "userTyping", {
+      chatId: Number(chatId),
+      senderId: socket.userId,
+      senderName: senderName || "User",
+      isTyping: Boolean(isTyping),
+    });
   });
 
-  // ── 4. Property inquiry ─────────────────────────────────────────
+  // ── 4. Property inquiry (staff-only broadcast) ──────────────────
   socket.on("propertyInquiry", (data) => {
-    for (const [, socketId] of onlineUsers.entries()) {
-      io.to(socketId).emit("newInquiry", data);
+    for (const [uid, role] of userRoles.entries()) {
+      if (role === "ADMIN" || role === "STAFF" || role === "AGENT") {
+        emitToUser(uid, "newInquiry", data);
+      }
     }
   });
 
@@ -167,10 +198,26 @@ io.on("connection", (socket) => {
   // ── WebRTC: Call Offer ──────────────────────────────────────────
   // Frontend sends: { targetUserId, offer, callType, chatId, callerName, callerAvatar }
   socket.on("call-offer", (data) => {
-    const { targetUserId, offer, callType, chatId, callerName, callerAvatar } = data;
-    const receiverSocketId = getSocketId(targetUserId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("incoming-call", {
+    const { targetUserId, offer, callType, chatId, callerName, callerAvatar } = data || {};
+    if (!targetUserId || String(targetUserId) === String(socket.userId)) return;
+
+    if (busyUsers.has(String(targetUserId))) {
+      socket.emit("callBusy", { targetUserId });
+      return;
+    }
+
+    const receiverSocketIds = getSocketIds(targetUserId);
+    if (receiverSocketIds.length === 0) {
+      console.log(`[Socket] Call target ${targetUserId} is offline`);
+      socket.emit("call-user-offline", { targetUserId });
+      return;
+    }
+
+    busyUsers.add(String(socket.userId));
+    busyUsers.add(String(targetUserId));
+
+    for (const socketId of receiverSocketIds) {
+      io.to(socketId).emit("incoming-call", {
         callerId: socket.userId,
         callerSocketId: socket.id,
         callerName: callerName || "Unknown",
@@ -179,58 +226,52 @@ io.on("connection", (socket) => {
         callType: callType || "audio",
         chatId,
       });
-      console.log(`[Socket] Call offer: ${socket.userId} → ${targetUserId} (${callType})`);
-    } else {
-      console.log(`[Socket] Call target ${targetUserId} is offline`);
-      socket.emit("call-user-offline", { targetUserId });
     }
+    console.log(`[Socket] Call offer: ${socket.userId} → ${targetUserId} (${callType})`);
   });
 
   // ── WebRTC: Call Answer ─────────────────────────────────────────
   // Frontend sends: { targetUserId, answer }
   socket.on("call-answer", (data) => {
-    const { targetUserId, answer } = data;
-    const targetSocketId = getSocketId(targetUserId);
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("call-answer", {
-        answererId: socket.userId,
-        answer,
-      });
-      console.log(`[Socket] Call answer: ${socket.userId} → ${targetUserId}`);
-    }
+    const { targetUserId, answer } = data || {};
+    if (!targetUserId) return;
+    emitToUser(targetUserId, "call-answer", {
+      answererId: socket.userId,
+      answer,
+    });
+    console.log(`[Socket] Call answer: ${socket.userId} → ${targetUserId}`);
   });
 
   // ── WebRTC: ICE Candidate ───────────────────────────────────────
   // Frontend sends: { targetUserId, candidate }
   socket.on("call-ice-candidate", (data) => {
-    const { targetUserId, candidate } = data;
-    const targetSocketId = getSocketId(targetUserId);
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("call-ice-candidate", {
-        fromUserId: socket.userId,
-        candidate,
-      });
-    }
+    const { targetUserId, candidate } = data || {};
+    if (!targetUserId) return;
+    emitToUser(targetUserId, "call-ice-candidate", {
+      fromUserId: socket.userId,
+      candidate,
+    });
   });
 
   // ── WebRTC: Call Reject ─────────────────────────────────────────
   // Frontend sends: { targetUserId }
   socket.on("call-reject", (data) => {
-    const { targetUserId } = data;
-    const targetSocketId = getSocketId(targetUserId);
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("call-rejected", { rejectedBy: socket.userId });
-      console.log(`[Socket] Call rejected by ${socket.userId}`);
-    }
+    const { targetUserId } = data || {};
+    if (!targetUserId) return;
+    busyUsers.delete(String(socket.userId));
+    busyUsers.delete(String(targetUserId));
+    emitToUser(targetUserId, "call-rejected", { rejectedBy: socket.userId });
+    console.log(`[Socket] Call rejected by ${socket.userId}`);
   });
 
   // ── WebRTC: Call End ────────────────────────────────────────────
   // Frontend sends: { targetUserId, chatId, callerId, receiverId, callType, duration }
   socket.on("call-end", (data) => {
-    const { targetUserId, chatId, callerId, receiverId, callType, duration } = data;
-    const targetSocketId = getSocketId(targetUserId);
-    if (targetSocketId) {
-      io.to(targetSocketId).emit("call-ended", {
+    const { targetUserId, chatId, callerId, receiverId, callType, duration } = data || {};
+    busyUsers.delete(String(socket.userId));
+    if (targetUserId) {
+      busyUsers.delete(String(targetUserId));
+      emitToUser(targetUserId, "call-ended", {
         endedBy: socket.userId,
         duration: duration || 0,
       });
@@ -281,8 +322,10 @@ io.on("connection", (socket) => {
   // ── Disconnect ──────────────────────────────────────────────────
   socket.on("disconnect", (reason) => {
     console.log("[Socket] Disconnected:", socket.id, reason);
-    if (socket.userId) {
-      socket.broadcast.emit("call-user-disconnected", { userId: socket.userId });
+    const uid = socketUserMap.get(socket.id);
+    if (uid) {
+      busyUsers.delete(uid);
+      socket.broadcast.emit("call-user-disconnected", { userId: uid });
     }
     removeUser(socket.id);
     io.emit("getOnlineUsers", getOnlineUserIds());

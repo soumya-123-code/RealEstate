@@ -211,7 +211,7 @@ export default function useSupportChat() {
           try {
             const custRes = await apiRequest.get(`${API_BASE}/customers/${full.customerId}`);
             setCustomerInfo(custRes.data);
-          } catch (_) {}
+          } catch (_) { /* optional detail fetch */ }
         }
 
         // Fetch property info
@@ -219,7 +219,7 @@ export default function useSupportChat() {
           try {
             const propRes = await apiRequest.get(`/properties/${full.propertyId}`);
             setPropertyInfo(propRes.data);
-          } catch (_) {}
+          } catch (_) { /* optional detail fetch */ }
         }
 
         if (!full.propertyId) {
@@ -450,7 +450,7 @@ export default function useSupportChat() {
   );
 
   // ── Forward message ──────────────────────────────────────────────────────
-  const forwardMessage = useCallback(
+  const forwardMessageToConversation = useCallback(
     async (messageId, targetConversationId) => {
       try {
         await apiRequest.post(`${API_BASE}/conversations/${targetConversationId}/messages/forward`, {
@@ -682,7 +682,7 @@ export default function useSupportChat() {
     sendAttachment,
     editMessage,
     deleteMessage,
-    forwardMessage: forwardMessage,
+    forwardMessageToConversation,
     assignStaff,
     resolveConversation,
     archiveConversation,

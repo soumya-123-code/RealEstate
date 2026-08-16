@@ -27,9 +27,9 @@ class ErrorBoundary extends Component {
           <div className="error-content">
             <FiAlertTriangle className="error-icon" />
             <h1>Oops! Something went wrong</h1>
-            <p>We're sorry, but something unexpected happened.</p>
-            
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            <p>We&apos;re sorry, but something unexpected happened.</p>
+
+            {import.meta.env.DEV && this.state.error && (
               <div className="error-details">
                 <pre>{this.state.error.toString()}</pre>
               </div>

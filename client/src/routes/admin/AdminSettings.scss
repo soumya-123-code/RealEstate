@@ -74,13 +74,13 @@
             transition: all 0.3s;
 
             &:hover {
-              border-color: #667eea;
+              border-color: #2c3e6b;
               background: #f7fafc;
             }
 
             svg {
               font-size: 36px;
-              color: #667eea;
+              color: #2c3e6b;
               margin-bottom: 10px;
             }
 
@@ -122,7 +122,7 @@
           transition: border-color 0.3s;
 
           &:focus {
-            border-color: #667eea;
+            border-color: #2c3e6b;
           }
         }
 
@@ -156,7 +156,7 @@
         align-items: center;
         gap: 10px;
         padding: 14px 32px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #2c3e6b 0%, #1e2a45 100%);
         color: white;
         border: none;
         border-radius: 8px;
@@ -192,7 +192,7 @@
     width: 50px;
     height: 50px;
     border: 4px solid #e2e8f0;
-    border-top-color: #667eea;
+    border-top-color: #2c3e6b;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -201,5 +201,23 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Website settings additions */
+.section-hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #718096;
+  line-height: 1.5;
+}
+
+.image-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  input[type='text'] {
+    flex: 1;
   }
 }

@@ -2,26 +2,30 @@
 $sidebar-w: 252px;
 $topbar-h: 64px;
 
-// Sidebar palette — deep indigo/slate
-$sb-bg: #0f1117;
-$sb-surface: #181c27;
-$sb-border: rgba(255,255,255,0.06);
-$sb-text: rgba(255,255,255,0.55);
-$sb-text-hi: rgba(255,255,255,0.92);
-$sb-accent: #6366f1;       // indigo
-$sb-accent-glow: rgba(99,102,241,0.18);
-$sb-hover: rgba(255,255,255,0.05);
-$sb-active: rgba(99,102,241,0.15);
+// Sidebar palette — deep navy with warm gold accents (Suretreaven brand)
+$sb-bg: #111d36;
+$sb-bg-2: #16264a;
+$sb-surface: rgba(255,255,255,0.035);
+$sb-border: rgba(255,255,255,0.08);
+$sb-text: rgba(255,255,255,0.58);
+$sb-text-hi: rgba(255,255,255,0.94);
+$sb-accent: #d9a84e;       // gold
+$sb-accent-soft: #e8c37a;
+$sb-accent-glow: rgba(217,168,78,0.16);
+$sb-hover: rgba(255,255,255,0.06);
+$sb-active: rgba(217,168,78,0.14);
 
-// Main area
-$main-bg: #f5f6fa;
+// Main area — warm premium neutrals
+$main-bg: #f6f4ef;
 $card-bg: #ffffff;
-$border-light: #e8eaf0;
-$text-heading: #0d1117;
-$text-body: #4b5563;
-$text-muted: #9ca3af;
-$accent: #6366f1;
-$accent-lt: #eef2ff;
+$border-light: #e9e3d7;
+$text-heading: #1b2a45;
+$text-body: #46536b;
+$text-muted: #8d99ad;
+$accent: #b98a2f;           // gold (readable on white)
+$accent-lt: #faf3e2;
+$navy: #1e2a45;
+$navy-2: #2c3e6b;
 
 // ─── Animations ──────────────────────────────────────────
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -47,7 +51,7 @@ $accent-lt: #eef2ff;
   .loading-spinner {
     width: 36px; height: 36px;
     border: 2.5px solid rgba(255,255,255,0.1);
-    border-top-color: $sb-accent;
+    border-top-color: $sb-accent-soft;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
   }
@@ -83,7 +87,7 @@ $accent-lt: #eef2ff;
 // ─── Sidebar ─────────────────────────────────────────────
 .admin-sidebar {
   width: $sidebar-w;
-  background: $sb-bg;
+  background: linear-gradient(175deg, $sb-bg-2 0%, $sb-bg 55%, #0e1830 100%);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -123,71 +127,10 @@ $accent-lt: #eef2ff;
 
   .brand-tag {
     font-size: 10.5px;
-    color: $sb-accent;
-    font-weight: 600;
+    color: $sb-accent-soft;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-  }
-}
-
-// User card
-.sidebar-user-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
-  border-bottom: 1px solid $sb-border;
-  background: $sb-surface;
-  flex-shrink: 0;
-
-  .user-avatar {
-    width: 34px; height: 34px;
-    border-radius: 10px;
-    background: $sb-accent-glow;
-    border: 1px solid rgba(99,102,241,0.3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700;
-    color: lighten($sb-accent, 25%);
-    flex-shrink: 0;
-    overflow: hidden;
-
-    img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-  }
-
-  .user-info {
-    min-width: 0;
-    flex: 1;
-  }
-
-  .user-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: $sb-text-hi;
-    margin: 0 0 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .role-pill {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.4px;
-    padding: 2px 7px;
-    border-radius: 4px;
-
-    &.role-admin {
-      background: rgba(99,102,241,0.2);
-      color: #a5b4fc;
-    }
-    &.role-staff {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.45);
-    }
+    letter-spacing: 1px;
   }
 }
 
@@ -230,25 +173,54 @@ $accent-lt: #eef2ff;
   margin: 0;
 }
 
+// Collapsible group header — pill-style interactive toggle
 .nav-section-toggle {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 10px 18px 4px;
-  background: none;
+  gap: 8px;
+  width: calc(100% - 16px);
+  margin: 3px 8px 3px;
+  padding: 7px 10px;
+  background: transparent;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  color: rgba(255,255,255,0.25);
-  transition: color 0.2s;
+  color: rgba(255,255,255,0.3);
+  transition: background 0.15s, color 0.15s;
 
-  &:hover { color: rgba(255,255,255,0.5); }
+  &:hover {
+    color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.05);
+  }
+
+  &:focus-visible {
+    outline: 1px solid rgba(165,180,252,0.5);
+    outline-offset: -1px;
+  }
 
   .section-label { flex: 1; text-align: left; }
+
+  .toggle-count {
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 3px 7px;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.4);
+  }
+
+  .toggle-chevron {
+    flex-shrink: 0;
+    color: rgba(255,255,255,0.35);
+    transition: transform 0.22s ease;
+  }
+
+  .toggle-chevron.open { transform: rotate(180deg); }
 }
 
 .nav-link {
@@ -287,8 +259,9 @@ $accent-lt: #eef2ff;
 
   &.active {
     background: $sb-active;
-    color: #a5b4fc;
+    color: $sb-accent-soft;
     font-weight: 600;
+    box-shadow: inset 0 0 0 1px rgba(217,168,78,0.22);
     .nav-icon { opacity: 1; color: $sb-accent; }
 
     // Left accent stripe
@@ -323,8 +296,17 @@ $accent-lt: #eef2ff;
 .collapsible-links {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.28s ease;
-  &.expanded { max-height: 480px; }
+  // visibility keeps collapsed links out of the a11y tree / tab order
+  // while still allowing the height animation on expand.
+  visibility: hidden;
+  transition: max-height 0.3s ease, visibility 0s linear 0.3s;
+
+  // Room for the largest group (11 items) plus future additions
+  &.expanded {
+    max-height: 1200px;
+    visibility: visible;
+    transition: max-height 0.3s ease;
+  }
 }
 
 // ─── Main area ───────────────────────────────────────────
@@ -421,12 +403,13 @@ $accent-lt: #eef2ff;
 }
 
 .topbar-search {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 0 12px;
   height: 38px;
-  background: #f5f6fa;
+  background: #f4f1ea;
   border: 1px solid $border-light;
   border-radius: 10px;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -434,7 +417,7 @@ $accent-lt: #eef2ff;
   &:focus-within {
     border-color: $accent;
     background: $card-bg;
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    box-shadow: 0 0 0 3px rgba(185,138,47,0.14);
   }
 
   .search-icon {
@@ -461,6 +444,96 @@ $accent-lt: #eef2ff;
     border-radius: 5px;
     padding: 2px 6px;
     font-family: inherit;
+    flex-shrink: 0;
+  }
+}
+
+// Live search results dropdown
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: $card-bg;
+  border: 1px solid $border-light;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(27, 42, 69, 0.14);
+  max-height: 380px;
+  overflow-y: auto;
+  z-index: 1200;
+  padding: 6px;
+}
+
+.sd-state {
+  padding: 18px 14px;
+  text-align: center;
+  font-size: 12.5px;
+  color: $text-muted;
+}
+
+.sd-group {
+  & + .sd-group { margin-top: 4px; }
+}
+
+.sd-group-label {
+  margin: 0;
+  padding: 8px 10px 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: $text-muted;
+}
+
+.sd-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  color: $text-body;
+  transition: background 0.12s;
+
+  &:hover, &.active {
+    background: $accent-lt;
+    color: $text-heading;
+  }
+
+  .sd-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: rgba(30, 42, 69, 0.06);
+    color: $navy;
+    flex-shrink: 0;
+  }
+
+  .sd-main {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    color: $text-heading;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sd-sub {
+    font-size: 11.5px;
+    color: $text-muted;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 40%;
     flex-shrink: 0;
   }
 }
@@ -556,7 +629,7 @@ $accent-lt: #eef2ff;
   transition: background 0.15s, color 0.15s;
 
   &:hover {
-    background: #f5f6fa;
+    background: #f7f4ee;
     color: $text-heading;
   }
 }
@@ -576,7 +649,7 @@ $accent-lt: #eef2ff;
   cursor: pointer;
   transition: background 0.15s;
   border: none;
-  border-bottom: 1px solid #f5f6fa;
+  border-bottom: 1px solid #f4f0e8;
   background: $card-bg;
   width: 100%;
   text-align: left;
@@ -681,7 +754,7 @@ $accent-lt: #eef2ff;
   width: 34px; height: 34px;
   border-radius: 9px;
   background: $sb-accent-glow;
-  border: 1px solid lighten($accent, 30%);
+  border: 1px solid rgba(217,168,78,0.45);
   display: flex; align-items: center; justify-content: center;
   font-size: 11px;
   font-weight: 700;
@@ -779,6 +852,17 @@ $accent-lt: #eef2ff;
 }
 
 // ─── Shared page styles ───────────────────────────────────
+// The topbar shows the page title + subtitle, so inner pages only
+// contribute actions (Add / Manage buttons), right-aligned.
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
 .page-header {
   display: flex;
   align-items: flex-start;
@@ -802,14 +886,16 @@ $accent-lt: #eef2ff;
 .btn-primary {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 9px 18px;
-  background: $accent;
+  background: linear-gradient(135deg, $navy-2 0%, $navy 100%);
   color: white; border: none; border-radius: 9px;
   font-size: 13.5px; font-weight: 700;
   cursor: pointer; text-decoration: none;
-  transition: background 0.15s, transform 0.15s;
+  box-shadow: 0 1px 3px rgba(27,42,69,0.25);
+  transition: box-shadow 0.15s, transform 0.15s, filter 0.15s;
 
   &:hover {
-    background: darken($accent, 8%);
+    filter: brightness(1.12);
+    box-shadow: 0 3px 10px rgba(27,42,69,0.3);
     transform: translateY(-1px);
   }
 }
@@ -863,7 +949,7 @@ $accent-lt: #eef2ff;
 
     &:focus {
       border-color: $accent;
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+      box-shadow: 0 0 0 3px rgba(185,138,47,0.14);
     }
   }
 
@@ -881,7 +967,7 @@ $accent-lt: #eef2ff;
   width: 100%; border-collapse: collapse;
 
   th {
-    background: #fafbff;
+    background: #faf8f3;
     font-size: 10.5px; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.8px;
     color: $text-muted;
@@ -893,7 +979,7 @@ $accent-lt: #eef2ff;
   td {
     padding: 13px 16px;
     font-size: 13.5px; color: $text-body;
-    border-bottom: 1px solid #f5f6fa;
+    border-bottom: 1px solid #f4f0e8;
     vertical-align: middle;
   }
 
@@ -974,7 +1060,7 @@ $accent-lt: #eef2ff;
 
     button {
       width: 32px; height: 32px;
-      background: #f5f6fa; border: 1px solid $border-light;
+      background: #f7f4ee; border: 1px solid $border-light;
       border-radius: 8px; font-size: 16px; cursor: pointer; color: $text-muted;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.15s;

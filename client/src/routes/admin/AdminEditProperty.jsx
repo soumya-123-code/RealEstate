@@ -199,11 +199,6 @@ function AdminEditProperty() {
 
   return (
     <div className="admin-edit-property">
-      <div className="page-header">
-        <h1>Edit Property</h1>
-        <p>Update property details</p>
-      </div>
-
       <form onSubmit={handleSubmit} className="property-form">
         {/* Same form structure as AdminAddProperty */}
         <div className="form-section">

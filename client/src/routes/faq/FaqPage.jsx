@@ -4,6 +4,9 @@ import apiRequest from '../../lib/apiRequest';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiChevronDown, FiMessageCircle, FiPhone, FiMail, FiHelpCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import Seo from '../../components/Seo/Seo';
+import { usePageSections } from '../../hooks/usePageSections';
+import { sanitizeAppPath } from '../../lib/sanitizeAppPath';
 import './FaqPage.scss';
 
 function FaqPage() {
@@ -14,6 +17,7 @@ function FaqPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openIndex, setOpenIndex] = useState(null);
   const [companyInfo, setCompanyInfo] = useState(null);
+  const { section: ctaSection, show, value: sectionValue } = usePageSections('faq');
 
   useEffect(() => {
     fetchFaqs();
@@ -80,6 +84,7 @@ function FaqPage() {
 
   return (
     <div className="faq-page">
+      <Seo page="faq" />
       {/* Hero Section */}
       <section className="faq-hero">
         <div className="hero-overlay" />
@@ -91,8 +96,8 @@ function FaqPage() {
             transition={{ duration: 0.8 }}
           >
             <span className="hero-badge"><FiHelpCircle size={16} /> Help Center</span>
-            <h1>Frequently Asked Questions</h1>
-            <p>Find answers to common questions about our real estate services</p>
+            <h1>{sectionValue('hero', null, 'title', 'Frequently Asked Questions')}</h1>
+            <p>{sectionValue('hero', null, 'subtitle', 'Find answers to common questions about our real estate services')}</p>
 
             <div className="faq-search">
               <FiSearch size={20} />
@@ -193,6 +198,7 @@ function FaqPage() {
       </section>
 
       {/* Contact CTA */}
+      {show('cta', 'CTA') && (
       <section className="faq-cta">
         <div className="container">
           <motion.div
@@ -202,11 +208,11 @@ function FaqPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2>Still Have Questions?</h2>
-            <p>Our support team is ready to help you with any queries about properties, bookings, or our services.</p>
+            <h2>{sectionValue('cta', 'CTA', 'title', 'Still Have Questions?')}</h2>
+            <p>{sectionValue('cta', 'CTA', 'subtitle', 'Our support team is ready to help you with any queries about properties, bookings, or our services.')}</p>
             <div className="cta-actions">
-              <Link to="/contact" className="btn btn-primary btn-lg">
-                <FiMessageCircle size={18} /> Contact Support
+              <Link to={sanitizeAppPath(ctaSection?.buttonLink, '/contact')} className="btn btn-primary btn-lg">
+                <FiMessageCircle size={18} /> {sectionValue('cta', 'CTA', 'buttonText', 'Contact Support')}
               </Link>
               {companyInfo?.phone && (
                 <a href={`tel:${companyInfo.phone}`} className="btn btn-outline btn-lg">
@@ -222,6 +228,7 @@ function FaqPage() {
           </motion.div>
         </div>
       </section>
+      )}
     </div>
   );
 }

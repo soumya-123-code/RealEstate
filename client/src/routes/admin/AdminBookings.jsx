@@ -78,13 +78,6 @@ function AdminBookings() {
 
   return (
     <div className="admin-bookings">
-      <div className="page-header">
-        <div>
-          <h1>Bookings Management</h1>
-          <p>Manage all property bookings</p>
-        </div>
-      </div>
-
       <div className="filters">
         <button 
           className={filter === 'ALL' ? 'active' : ''} 

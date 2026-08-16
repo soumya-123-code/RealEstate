@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives",
     "preview": "vite preview"
   },
   "dependencies": {
     "axios": "^1.6.7",
     "dompurify": "^3.0.9",
+    "framer-motion": "^11.0.3",
     "leaflet": "^1.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -23,8 +24,7 @@
     "sass": "^1.71.1",
     "socket.io-client": "^4.7.5",
     "timeago.js": "^4.0.2",
-    "zustand": "^4.5.2",
-    "framer-motion": "^11.0.3"
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

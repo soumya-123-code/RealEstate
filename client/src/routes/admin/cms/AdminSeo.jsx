@@ -125,11 +125,7 @@ function AdminSeo() {
 
   return (
     <div className="cms-page">
-      <div className="cms-toolbar">
-        <div>
-          <h2 className="cms-toolbar__title">SEO Settings</h2>
-          <p className="cms-toolbar__sub">Per-page meta titles, descriptions, and Open Graph images</p>
-        </div>
+      <div className="cms-toolbar cms-toolbar--actions">
         <div className="cms-toolbar__actions">
           <button type="button" className="cms-btn cms-btn--ghost" onClick={fetchItems}>
             <FiRefreshCw size={15} /> Refresh

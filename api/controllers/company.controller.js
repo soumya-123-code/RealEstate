@@ -39,6 +39,16 @@ export const getCompanySettings = async (req, res) => {
 };
 
 // Update company settings (Admin)
+const EDITABLE_SETTINGS_FIELDS = [
+  "companyName", "companyLogo", "email", "phone", "address", "city", "state",
+  "pincode", "country", "website", "description", "whatsappNumber", "mission",
+  "vision", "tagline", "foundedYear", "gstNumber", "panNumber", "cinNumber",
+  "facebook", "twitter", "instagram", "linkedin", "youtube", "termsContent",
+  "privacyContent", "aboutImage", "statsProperties", "statsCustomers",
+  "statsCities", "statsYears", "statsProjects", "googleMapsEmbed", "metaTitle",
+  "metaDescription", "metaKeywords",
+];
+
 export const updateCompanySettings = async (req, res) => {
   const tokenUserId = req.userId;
 
@@ -49,8 +59,11 @@ export const updateCompanySettings = async (req, res) => {
 
     const existingSettings = await prisma.companySettings.findFirst();
 
-    // Allow updating all CompanySettings fields
-    const updateData = { ...req.body };
+    // Only accept known CompanySettings columns
+    const updateData = {};
+    for (const field of EDITABLE_SETTINGS_FIELDS) {
+      if (req.body[field] !== undefined) updateData[field] = req.body[field];
+    }
 
     let companySettings;
 

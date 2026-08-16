@@ -72,11 +72,7 @@ function AdminProperties() {
 
   return (
     <div className="admin-properties">
-      <div className="page-header">
-        <div>
-          <h1>Properties Management</h1>
-          <p>Manage all your properties</p>
-        </div>
+      <div className="page-actions">
         <Link to="/admin/add-property" className="btn-primary">
           <FiPlus /> Add Property
         </Link>

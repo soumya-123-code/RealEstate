@@ -73,11 +73,7 @@ function AdminLeads() {
 
   return (
     <div className="cms-page">
-      <div className="cms-toolbar">
-        <div>
-          <h2 className="cms-toolbar__title">Leads</h2>
-          <p className="cms-toolbar__sub">Website and campaign inquiries</p>
-        </div>
+      <div className="cms-toolbar cms-toolbar--actions">
         <div className="cms-toolbar__actions">
           <button type="button" className="cms-btn cms-btn--ghost" onClick={fetchItems}>
             <FiRefreshCw size={15} /> Refresh

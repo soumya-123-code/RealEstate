@@ -57,11 +57,7 @@ function AdminAnalytics() {
 
   return (
     <div className="cms-page">
-      <div className="cms-toolbar">
-        <div>
-          <h2 className="cms-toolbar__title">CMS Analytics</h2>
-          <p className="cms-toolbar__sub">Overview of inventory, leads, and content volume</p>
-        </div>
+      <div className="cms-toolbar cms-toolbar--actions">
         <div className="cms-toolbar__actions">
           <button type="button" className="cms-btn cms-btn--ghost" onClick={fetchData}>
             <FiRefreshCw size={15} /> Refresh

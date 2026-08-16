@@ -603,7 +603,7 @@
     outline: none;
 
     &:focus {
-      border-color: #2e7d32;
+      border-color: var(--primary, #17324d);
     }
 
     @media screen and (max-width: 768px) {
@@ -617,7 +617,7 @@
     justify-content: center;
     width: 18px;
     height: 18px;
-    background: #2e7d32;
+    background: var(--primary, #17324d);
     color: white;
     border-radius: 50%;
     font-size: 11px;
@@ -644,14 +644,14 @@
       transition: all 0.25s;
 
       &:hover:not(:disabled) {
-        border-color: #2e7d32;
-        color: #2e7d32;
+        border-color: var(--primary, #17324d);
+        color: var(--primary, #17324d);
       }
 
       &.active {
-        background: #2e7d32;
+        background: var(--primary, #17324d);
         color: white;
-        border-color: #2e7d32;
+        border-color: var(--primary, #17324d);
       }
 
       &:disabled {

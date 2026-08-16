@@ -54,12 +54,17 @@ function BookingModal({ property, onClose }) {
         propertyId: property.id,
       });
       const b = res.data.booking || { id: res.data.bookingId, bookingStatus: 'CONTACTED' };
+      const link = res.data.whatsappLink;
       setBooking(b);
       setWhatsappLink(link);
 
       // Open WhatsApp in a new tab with the prefilled message
-      window.open(link, '_blank', 'noopener,noreferrer');
-      toast.success('WhatsApp opened with booking details');
+      if (link) {
+        window.open(link, '_blank', 'noopener,noreferrer');
+        toast.success('WhatsApp opened with booking details');
+      } else {
+        toast.success('Booking created');
+      }
     } catch (err) {
       console.error('Booking error:', err);
       toast.error(err.response?.data?.message || 'Failed to create booking');
@@ -117,7 +122,7 @@ function BookingModal({ property, onClose }) {
               <div className="booking-modal__step">
                 <span className="booking-modal__step-num">1</span>
                 <div>
-                  <strong>Click "Continue on WhatsApp"</strong>
+                  <strong>Click &ldquo;Continue on WhatsApp&rdquo;</strong>
                   <p>A WhatsApp chat with our admin will open with your property details pre-filled.</p>
                 </div>
               </div>

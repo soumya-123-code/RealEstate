@@ -4,11 +4,14 @@ import { SocketContext } from '../../context/SocketContext';
 import { FiSend, FiMessageCircle, FiX, FiUser, FiPhone, FiMail, FiUserCheck, FiMapPin, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
 import apiRequest from '../../lib/apiRequest';
 import toast from 'react-hot-toast';
+import Seo from '../../components/Seo/Seo';
+import { usePageSections } from '../../hooks/usePageSections';
 import './Contact.scss';
 
 function Contact() {
   const { currentUser } = useAuth();
   const { socket } = useContext(SocketContext);
+  const { value: sectionValue } = usePageSections('contact');
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -211,10 +214,11 @@ function Contact() {
 
   return (
     <div className="contact-page">
+      <Seo page="contact" />
       <div className="container-fluid">
         <div className="contact-header">
-          <h1>Contact Us</h1>
-          <p>Get in touch with our team for any queries</p>
+          <h1>{sectionValue('hero', null, 'title', 'Contact Us')}</h1>
+          <p>{sectionValue('hero', null, 'subtitle', 'Get in touch with our team for any queries')}</p>
         </div>
 
         {/* Tab Switcher */}
@@ -242,7 +246,7 @@ function Contact() {
               {/* Contact Info */}
               <div className="contact-info">
                 <h3>Get In Touch</h3>
-                <p>Have a question about a property or need assistance? We'd love to hear from you.</p>
+                <p>Have a question about a property or need assistance? We&apos;d love to hear from you.</p>
 
                 <div className="info-items">
                   {companyInfo?.phone && (

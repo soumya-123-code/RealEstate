@@ -12,7 +12,6 @@ import {
   FiRefreshCw,
   FiCheckCircle,
   FiHome,
-  FiShield,
 } from 'react-icons/fi';
 import './Register.scss';
 
@@ -304,7 +303,7 @@ function Register() {
                   <FiMail size={24} />
                 </div>
                 <h3>Verify Your Email</h3>
-                <p>We've sent a 6-digit verification code to <strong>{email}</strong></p>
+                <p>We&apos;ve sent a 6-digit verification code to <strong>{email}</strong></p>
               </div>
 
               <div className="otp-input-group">

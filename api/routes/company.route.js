@@ -5,10 +5,13 @@ import {
   uploadCompanyLogo,
   uploadPropertyImages,
 } from "../controllers/company.controller.js";
-import { verifyToken } from "../middleware/verifyToken.js";
+import { verifyToken, verifyAdmin, requireManageCms } from "../middleware/verifyToken.js";
 import { upload } from "../middleware/upload.js";
 
 const router = express.Router();
+
+// Website settings change what every visitor sees → admin panel + MANAGE_CMS.
+const settingsWrite = [verifyToken, verifyAdmin, requireManageCms];
 
 /**
  * @openapi
@@ -34,7 +37,7 @@ router.get("/settings", getCompanySettings);
  *       200:
  *         description: Settings updated
  */
-router.put("/settings", verifyToken, updateCompanySettings);
+router.put("/settings", ...settingsWrite, updateCompanySettings);
 
 /**
  * @openapi
@@ -58,7 +61,7 @@ router.put("/settings", verifyToken, updateCompanySettings);
  *       200:
  *         description: Logo uploaded successfully
  */
-router.post("/upload-logo", verifyToken, upload.single("logo"), uploadCompanyLogo);
+router.post("/upload-logo", ...settingsWrite, upload.single("logo"), uploadCompanyLogo);
 
 /**
  * @openapi
@@ -75,6 +78,7 @@ router.post("/upload-logo", verifyToken, upload.single("logo"), uploadCompanyLog
 router.post(
   "/upload-images",
   verifyToken,
+  verifyAdmin,
   upload.array("images", 10),
   uploadPropertyImages
 );
