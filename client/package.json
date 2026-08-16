@@ -14,7 +14,7 @@
     "axios": "^1.6.7",
     "dompurify": "^3.0.9",
     "framer-motion": "^11.0.3",
-    "leaflet": "^1.9.0",
+    "leaflet": "^1.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
