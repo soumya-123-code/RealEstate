@@ -1,0 +1,126 @@
+// ========================================
+// RESPONSIVE BREAKPOINTS
+// ========================================
+
+
+// ========================================
+// RESPONSIVE BREAKPOINTS
+// ========================================
+
+// Mobile Small
+@media (max-width: 480px) {
+  :root {
+    --font-size-5xl: 2rem;
+    --font-size-4xl: 1.75rem;
+    --font-size-3xl: 1.5rem;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+  
+  h1 { font-size: var(--font-size-4xl); }
+  h2 { font-size: var(--font-size-3xl); }
+  h3 { font-size: var(--font-size-2xl); }
+}
+
+// Mobile
+@media (max-width: 768px) {
+  .btn {
+    &-lg {
+      padding: 0.875rem 1.5rem;
+      font-size: var(--font-size-base);
+    }
+    
+    &-xl {
+      padding: 1rem 1.75rem;
+      font-size: var(--font-size-lg);
+    }
+  }
+  
+  .input-group {
+    input,
+    textarea,
+    select {
+      font-size: 16px; // Prevents zoom on iOS
+    }
+  }
+}
+
+// Tablet
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding: 0 2rem;
+  }
+}
+
+// Desktop
+@media (min-width: 1025px) {
+  .hover-lift {
+    transition: transform var(--transition-base);
+    
+    &:hover {
+      transform: translateY(-4px);
+    }
+  }
+}
+
+// Mobile Small
+@media (max-width: 480px) {
+  :root {
+    --font-size-5xl: 2rem;
+    --font-size-4xl: 1.75rem;
+    --font-size-3xl: 1.5rem;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+  
+  h1 { font-size: var(--font-size-4xl); }
+  h2 { font-size: var(--font-size-3xl); }
+  h3 { font-size: var(--font-size-2xl); }
+}
+
+// Mobile
+@media (max-width: 768px) {
+  .btn {
+    &-lg {
+      padding: 0.875rem 1.5rem;
+      font-size: var(--font-size-base);
+    }
+    
+    &-xl {
+      padding: 1rem 1.75rem;
+      font-size: var(--font-size-lg);
+    }
+  }
+  
+  .input-group {
+    input,
+    textarea,
+    select {
+      font-size: 16px; // Prevents zoom on iOS
+    }
+  }
+}
+
+// Tablet
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding: 0 2rem;
+  }
+}
+
+// Desktop
+@media (min-width: 1025px) {
+  .hover-lift {
+    transition: transform var(--transition-base);
+    
+    &:hover {
+      transform: translateY(-4px);
+    }
+  }
+}

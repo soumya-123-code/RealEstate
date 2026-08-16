@@ -1,0 +1,13 @@
+.search-bar {
+  display: flex;
+  gap: var(--space-sm);
+  max-width: 600px;
+  margin: 0 auto;
+  
+  input {
+    flex: 1;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+  }
+}

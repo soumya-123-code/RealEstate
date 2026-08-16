@@ -1,0 +1,602 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// USER & AUTH
+// ========================================
+
+model User {
+  id                Int                 @id @default(autoincrement())
+  email             String              @unique
+  username          String              @unique
+  password          String?
+  avatar            String?
+  role              UserRole            @default(USER)
+  phone             String?
+  permissions       Json?
+  canAccessAdminPanel Boolean           @default(false)
+  passwordLoginEnabled Boolean          @default(false)
+  isEmailVerified   Boolean             @default(false)
+  isPhoneVerified   Boolean             @default(false)
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  bookings          Booking[]
+  chatParticipants  ChatParticipant[]
+  messages          Message[]
+  notifications     Notification[]
+  callLogsAsCaller  CallLog[]          @relation("CallCaller")
+  callLogsAsReceiver CallLog[]         @relation("CallReceiver")
+  agent             Agent?
+  leads             Lead[]              @relation("LeadAssignedTo")
+  contactRequests   ContactRequest[]
+  
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+  STAFF
+  USER
+}
+
+// ========================================
+// AGENT MODEL
+// ========================================
+
+model Agent {
+  id              Int       @id @default(autoincrement())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int       @unique
+  licenseNumber   String?   @unique
+  specializations String?   @db.Text
+  experience      Int       @default(0)
+  about           String?   @db.Text
+  rating          Decimal?  @db.Decimal(3, 2)
+  totalSales      Int       @default(0)
+  isVerified      Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  properties      Property[]
+  
+  @@index([isVerified])
+  @@index([isActive])
+}
+
+// ========================================
+// COMPANY & CMS
+// ========================================
+
+model CompanySettings {
+  id              Int      @id @default(autoincrement())
+  companyName     String
+  companyLogo     String?
+  email           String?
+  phone           String?
+  address         String?  @db.Text
+  city            String?
+  state           String?
+  pincode         String?
+  country         String?  @default("India")
+  website         String?
+  description     String?  @db.Text
+  whatsappNumber  String?
+  mission         String?  @db.Text
+  vision          String?  @db.Text
+  tagline         String?
+  foundedYear     Int?
+  gstNumber       String?
+  panNumber       String?
+  cinNumber       String?
+  facebook        String?
+  twitter         String?
+  instagram       String?
+  linkedin        String?
+  youtube         String?
+  termsContent    String?  @db.Text
+  privacyContent  String?  @db.Text
+  aboutImage      String?
+  // Stats (manually set by admin for display)
+  statsProperties Int      @default(0)
+  statsCustomers  Int      @default(0)
+  statsCities     Int      @default(0)
+  statsYears      Int      @default(0)
+  statsProjects   Int      @default(0)
+  // Google Maps & SEO
+  googleMapsEmbed String?  @db.Text
+  metaTitle       String?
+  metaDescription String?  @db.Text
+  metaKeywords    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ========================================
+// HERO BANNER / SLIDER
+// ========================================
+
+model HeroBanner {
+  id          Int       @id @default(autoincrement())
+  title       String
+  subtitle    String?   @db.Text
+  image       String
+  buttonText  String?
+  buttonLink  String?
+  badge       String?
+  highlight   String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([isActive])
+  @@index([order])
+}
+
+// ========================================
+// SERVICES
+// ========================================
+
+model Service {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String    @db.Text
+  icon        String?
+  image       String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([isActive])
+}
+
+// ========================================
+// TESTIMONIALS
+// ========================================
+
+model Testimonial {
+  id          Int       @id @default(autoincrement())
+  name        String
+  role        String?
+  company     String?
+  avatar      String?
+  rating      Int       @default(5)
+  text        String    @db.Text
+  isActive    Boolean   @default(true)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([isActive])
+}
+
+// ========================================
+// FAQ
+// ========================================
+
+model Faq {
+  id          Int       @id @default(autoincrement())
+  question    String
+  answer      String    @db.Text
+  category    String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([isActive])
+  @@index([category])
+}
+
+// ========================================
+// TEAM MEMBERS
+// ========================================
+
+model TeamMember {
+  id          Int       @id @default(autoincrement())
+  name        String
+  designation String
+  bio         String?   @db.Text
+  avatar      String?
+  email       String?
+  phone       String?
+  linkedin    String?
+  twitter     String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([isActive])
+}
+
+// ========================================
+// PARTNERS
+// ========================================
+
+model Partner {
+  id          Int       @id @default(autoincrement())
+  name        String
+  logo        String?
+  website     String?
+  description String?   @db.Text
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([isActive])
+}
+
+// ========================================
+// BLOG / NEWS
+// ========================================
+
+model BlogPost {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  excerpt     String?   @db.Text
+  content     String    @db.Text
+  coverImage  String?
+  category    String?
+  tags        Json?
+  author      String?
+  isPublished Boolean   @default(false)
+  featured    Boolean   @default(false)
+  metaTitle       String?
+  metaDescription String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([slug])
+  @@index([isPublished])
+  @@index([category])
+  @@index([featured])
+}
+
+// ========================================
+// PROPERTIES (Enhanced for Multi-City/State)
+// ========================================
+
+model Property {
+  id              Int              @id @default(autoincrement())
+  title           String
+  slug            String?          @unique
+  description     String           @db.Text
+  price           Decimal          @db.Decimal(12, 2)
+  tokenAmount     Decimal          @db.Decimal(12, 2)
+  images          Json
+  address         String
+  locality        String?
+  city            String
+  state           String
+  pincode         String?
+  latitude        String?
+  longitude       String?
+  propertyType    PropertyType
+  saleType        SaleType
+  listingType     ListingType      @default(NEW)
+  furnishingStatus FurnishingStatus @default(UNFURNISHED)
+  status          PropertyStatus   @default(AVAILABLE)
+  bedroom         Int              @default(0)
+  bathroom        Int              @default(0)
+  area            Int
+  facing          String?
+  floorNumber     Int?
+  totalFloors     Int?
+  ageOfProperty   String?
+  possessionBy    String?
+  reraId          String?
+  amenities       Json?
+  features        Json?
+  isFeatured      Boolean          @default(false)
+  isVerified      Boolean          @default(false)
+  views           Int              @default(0)
+  metaTitle       String?
+  metaDescription String?          @db.Text
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  bookings        Booking[]
+  agentId         Int?
+  agent           Agent?           @relation(fields: [agentId], references: [id])
+  
+  @@index([status])
+  @@index([city])
+  @@index([state])
+  @@index([propertyType])
+  @@index([saleType])
+  @@index([isFeatured])
+  @@index([listingType])
+  @@index([furnishingStatus])
+  @@index([slug])
+  @@index([locality])
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  VILLA
+  PLOT
+  COMMERCIAL
+  LAND
+  FARMHOUSE
+  PENTHOUSE
+  STUDIO
+}
+
+enum SaleType {
+  SALE
+  RENT
+  LEASE
+}
+
+enum ListingType {
+  NEW
+  RESALE
+}
+
+enum FurnishingStatus {
+  FURNISHED
+  SEMI_FURNISHED
+  UNFURNISHED
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  TOKEN_BOOKED
+  SOLD
+  RENTED
+  UNAVAILABLE
+  UNDER_CONSTRUCTION
+}
+
+// ========================================
+// BOOKINGS
+// ========================================
+
+model Booking {
+  id              Int            @id @default(autoincrement())
+  property        Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId      Int
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int
+  bookingStatus   BookingStatus  @default(CONTACTED)
+  tokenAmount     Decimal?       @db.Decimal(12, 2)
+  tokenPaidDate   DateTime?
+  remarks         String?        @db.Text
+  adminNotes      String?        @db.Text
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@index([userId])
+  @@index([propertyId])
+  @@index([bookingStatus])
+}
+
+enum BookingStatus {
+  CONTACTED
+  TOKEN_PAID
+  BOOKING_CONFIRMED
+  CANCELLED
+  SITE_VISIT_SCHEDULED
+  NEGOTIATION
+}
+
+// ========================================
+// LEADS
+// ========================================
+
+model Lead {
+  id            Int           @id @default(autoincrement())
+  name          String
+  email         String?
+  phone         String
+  message       String?       @db.Text
+  source        LeadSource    @default(WEBSITE)
+  status        LeadStatus    @default(NEW)
+  assignedTo    User?         @relation("LeadAssignedTo", fields: [assignedToId], references: [id])
+  assignedToId  Int?
+  propertyId    Int?
+  propertyTitle String?
+  notes         String?       @db.Text
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  @@index([status])
+  @@index([source])
+  @@index([assignedToId])
+}
+
+enum LeadSource {
+  WEBSITE
+  WHATSAPP
+  PHONE
+  REFERRAL
+  SOCIAL_MEDIA
+  PROPERTY_PORTAL
+  WALK_IN
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  NEGOTIATION
+  CONVERTED
+  LOST
+}
+
+// ========================================
+// CONTACT REQUESTS
+// ========================================
+
+model ContactRequest {
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String?
+  subject     String?
+  message     String    @db.Text
+  isRead      Boolean   @default(false)
+  user        User?     @relation(fields: [userId], references: [id])
+  userId      Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([isRead])
+}
+
+// ========================================
+// CHAT
+// ========================================
+
+model Chat {
+  id            Int               @id @default(autoincrement())
+  lastMessage   String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  participants  ChatParticipant[]
+  messages      Message[]
+  callLogs     CallLog[]
+  
+  @@index([updatedAt])
+}
+
+model ChatParticipant {
+  id        Int      @id @default(autoincrement())
+  chatId    Int
+  userId    Int
+  hasSeen   Boolean  @default(false)
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@unique([chatId, userId])
+  @@index([chatId])
+  @@index([userId])
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  text      String   @db.Text
+  userId    Int
+  chatId    Int
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  
+  @@index([chatId])
+  @@index([userId])
+}
+
+// ========================================
+// OTP
+// ========================================
+
+model OtpVerification {
+  id         Int      @id @default(autoincrement())
+  email      String?
+  phone      String?
+  otp        String
+  type       OtpType
+  expiresAt  DateTime
+  isUsed     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  
+  @@index([email])
+  @@index([phone])
+  @@index([otp])
+  @@index([expiresAt])
+}
+
+enum OtpType {
+  EMAIL_VERIFICATION
+  EMAIL_LOGIN
+  PHONE_LOGIN
+  PHONE_VERIFICATION
+}
+
+// ========================================
+// NOTIFICATIONS
+// ========================================
+
+model Notification {
+  id         Int              @id @default(autoincrement())
+  userId     Int
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  message     String           @db.Text
+  type       NotificationType @default(INFO)
+  isRead     Boolean          @default(false)
+  link       String?
+  createdAt  DateTime         @default(now())
+  
+  @@index([userId])
+  @@index([isRead])
+}
+
+// ========================================
+// CALL LOGS (Audio/Video)
+// ========================================
+
+model CallLog {
+  id             Int           @id @default(autoincrement())
+  chatId         Int
+  callerId       Int
+  receiverId     Int
+  callType       String        @default("audio")
+  status         String        @default("missed")
+  duration       Int           @default(0)
+  startedAt      DateTime      @default(now())
+  endedAt        DateTime?
+  
+  chat           Chat          @relation(fields: [chatId], references: [id])
+  caller         User          @relation("CallCaller", fields: [callerId], references: [id])
+  receiver       User          @relation("CallReceiver", fields: [receiverId], references: [id])
+  
+  @@index([chatId])
+  @@index([callerId])
+  @@index([receiverId])
+  @@index([startedAt])
+}
+
+enum NotificationType {
+  INFO
+  INQUIRY
+  BOOKING
+  CHAT
+  PROPERTY_UPDATE
+  LEAD
+}
+
+// ========================================
+// SEO / SITE SETTINGS
+// ========================================
+
+model SeoSetting {
+  id              Int      @id @default(autoincrement())
+  page            String   @unique
+  metaTitle       String?
+  metaDescription String?  @db.Text
+  metaKeywords    String?
+  ogImage         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([page])
+}

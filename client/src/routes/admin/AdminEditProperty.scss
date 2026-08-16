@@ -1,0 +1,17 @@
+.admineditproperty {
+  padding: var(--space-2xl);
+  
+  h1 {
+    font-size: var(--font-size-3xl);
+    margin-bottom: var(--space-lg);
+  }
+  
+  p {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+  }
+}
+
+.admin-edit-property {
+  @import './AdminAddProperty.scss';
+}

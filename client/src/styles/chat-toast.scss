@@ -1,0 +1,111 @@
+.chat-toast{
+  position: relative;
+  width: 340px;
+  max-width: calc(100vw - 30px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(226,232,240,.85);
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 60px rgba(2,6,23,.18);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chat-toast--in{
+  animation: chatToastIn .18s ease-out;
+}
+.chat-toast--out{
+  animation: chatToastOut .15s ease-in forwards;
+}
+
+@keyframes chatToastIn{
+  from{ opacity: 0; transform: translateY(-8px) scale(.98); }
+  to{ opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes chatToastOut{
+  from{ opacity: 1; transform: translateY(0) scale(1); }
+  to{ opacity: 0; transform: translateY(-6px) scale(.99); }
+}
+
+.chat-toast__avatar{
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(124,110,247,.20), rgba(168,85,247,.18));
+  border: 1px solid rgba(124,110,247,.25);
+  color: #7c6ef7;
+  font-weight: 900;
+}
+
+.chat-toast__avatar img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chat-toast__dot{
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #22c55e;
+  border: 2px solid rgba(255,255,255,.95);
+}
+
+.chat-toast__body{
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chat-toast__name{
+  margin: 0;
+  font-size: 14px;
+  font-weight: 950;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-toast__text{
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: #6b7a99;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-toast__close{
+  flex-shrink: 0;
+  margin-left: 4px;
+  font-size: 14px;
+  color: rgba(107,122,153,.9);
+  padding: 6px;
+  border-radius: 10px;
+  transition: all .18s ease;
+}
+
+.chat-toast:hover .chat-toast__close{
+  background: rgba(124,110,247,.08);
+  color: #7c6ef7;
+}
+

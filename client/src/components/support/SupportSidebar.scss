@@ -1,0 +1,222 @@
+.support-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--sd-sidebar-bg);
+  border-right: 1px solid var(--sd-border);
+}
+
+.support-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--sd-border);
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--sd-text);
+  }
+}
+
+.support-sidebar__header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.support-sidebar__icon-btn {
+  background: transparent;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--sd-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--sd-bg);
+  }
+}
+
+.support-sidebar__new-btn {
+  background: var(--sd-primary);
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--sd-primary-hover);
+  }
+}
+
+// Stats widget
+.support-sidebar__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--sd-border);
+  background: #fafbfc;
+}
+
+.support-sidebar__stat {
+  text-align: center;
+  padding: 6px 4px;
+  border-radius: 6px;
+  background: #f1f5f9;
+
+  span {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--sd-text);
+    line-height: 1.1;
+  }
+  small {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--sd-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+  }
+
+  &--warning {
+    background: #fef3c7;
+    span { color: #92400e; }
+  }
+  &--success {
+    background: #dcfce7;
+    span { color: #14532d; }
+  }
+}
+
+// Search
+.support-sidebar__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--sd-border);
+  background: #fafbfc;
+
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.85rem;
+    color: var(--sd-text);
+
+    &::placeholder {
+      color: var(--sd-text-muted);
+    }
+  }
+
+  > svg {
+    color: var(--sd-text-muted);
+  }
+
+  button {
+    background: transparent;
+    border: none;
+    color: var(--sd-text-muted);
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+// Filter tabs
+.support-sidebar__filters {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--sd-border);
+  overflow-x: auto;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--sd-border);
+    border-radius: 2px;
+  }
+
+  button {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--sd-border);
+    color: var(--sd-text-muted);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+
+    &:hover {
+      background: var(--sd-bg);
+    }
+
+    &.active {
+      background: var(--sd-primary);
+      color: #fff;
+      border-color: var(--sd-primary);
+    }
+  }
+}
+
+// Conversation list
+.support-sidebar__list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--sd-border);
+    border-radius: 3px;
+  }
+}
+
+.support-sidebar__empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--sd-text-muted);
+
+  p {
+    margin: 12px 0 0;
+    font-size: 0.85rem;
+  }
+
+  .spin {
+    animation: ss-spin 0.8s linear infinite;
+  }
+}
+
+@keyframes ss-spin {
+  to { transform: rotate(360deg); }
+}

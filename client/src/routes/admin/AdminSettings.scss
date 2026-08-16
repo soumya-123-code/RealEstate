@@ -1,0 +1,205 @@
+.admin-settings {
+  max-width: 1000px;
+
+  .page-header {
+    margin-bottom: 30px;
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 5px 0;
+      color: #2d3748;
+    }
+
+    p {
+      color: #718096;
+      margin: 0;
+    }
+  }
+
+  .settings-form {
+    .form-section {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 25px;
+
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 25px 0;
+        color: #2d3748;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .logo-upload-section {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        flex-wrap: wrap;
+
+        .current-logo {
+          width: 150px;
+          height: 150px;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 3px solid #e2e8f0;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+        }
+
+        .logo-upload {
+          flex: 1;
+          min-width: 250px;
+
+          input[type="file"] {
+            display: none;
+          }
+
+          .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+
+            &:hover {
+              border-color: #667eea;
+              background: #f7fafc;
+            }
+
+            svg {
+              font-size: 36px;
+              color: #667eea;
+              margin-bottom: 10px;
+            }
+
+            span {
+              font-size: 16px;
+              font-weight: 600;
+              color: #4a5568;
+              margin-bottom: 5px;
+            }
+
+            small {
+              font-size: 12px;
+              color: #a0aec0;
+              text-align: center;
+            }
+          }
+        }
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+
+        label {
+          display: block;
+          font-size: 14px;
+          font-weight: 600;
+          color: #4a5568;
+          margin-bottom: 8px;
+        }
+
+        input,
+        textarea {
+          width: 100%;
+          padding: 12px;
+          border: 2px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 14px;
+          outline: none;
+          transition: border-color 0.3s;
+
+          &:focus {
+            border-color: #667eea;
+          }
+        }
+
+        textarea {
+          resize: vertical;
+          font-family: inherit;
+        }
+
+        .form-hint {
+          display: block;
+          margin-top: 8px;
+          font-size: 12px;
+          color: #718096;
+          line-height: 1.5;
+        }
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+
+      .btn-submit {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        &:not(:disabled):hover {
+          transform: translateY(-2px);
+        }
+
+        svg {
+          font-size: 18px;
+        }
+      }
+    }
+  }
+}
+
+.admin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 20px;
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,107 @@
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    rgba(255, 255, 255, 0.4) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md, 8px);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl, 20px);
+  overflow: hidden;
+  border: 1px solid var(--border-light, #f0f0f0);
+  box-shadow: var(--shadow-sm);
+
+  .skeleton-image {
+    height: 220px;
+    width: 100%;
+  }
+
+  .skeleton-content {
+    padding: 20px;
+
+    .skeleton-title {
+      height: 24px;
+      width: 70%;
+      margin-bottom: 12px;
+    }
+
+    .skeleton-price {
+      height: 28px;
+      width: 40%;
+      margin-bottom: 16px;
+    }
+
+    .skeleton-text {
+      height: 14px;
+      width: 100%;
+      margin-bottom: 8px;
+
+      &.short {
+        width: 60%;
+      }
+    }
+
+    .skeleton-features {
+      height: 40px;
+      width: 100%;
+      margin-top: 16px;
+    }
+  }
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+  padding: 20px 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.skeleton-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px;
+
+  .skeleton-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+  }
+
+  .skeleton-name {
+    height: 28px;
+    width: 200px;
+  }
+
+  .skeleton-email {
+    height: 18px;
+    width: 250px;
+  }
+
+  .skeleton-details {
+    height: 200px;
+    width: 100%;
+    margin-top: 20px;
+  }
+}
+
+.skeleton-text-custom {
+  display: inline-block;
+}

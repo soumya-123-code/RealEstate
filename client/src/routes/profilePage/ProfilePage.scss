@@ -1,0 +1,118 @@
+.profile-page {
+  padding: var(--space-2xl) 0;
+  min-height: 80vh;
+  
+  .profile-header {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    margin-bottom: var(--space-2xl);
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xl);
+      
+      .avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: var(--radius-full);
+        overflow: hidden;
+        
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        
+        .avatar-placeholder {
+          width: 100%;
+          height: 100%;
+          background: var(--primary);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2.5rem;
+          font-weight: var(--font-weight-bold);
+        }
+      }
+      
+      h1 {
+        font-size: var(--font-size-3xl);
+        margin-bottom: var(--space-sm);
+      }
+      
+      p {
+        color: var(--text-secondary);
+      }
+    }
+  }
+  
+  .profile-content {
+    h2 {
+      font-size: var(--font-size-2xl);
+      margin-bottom: var(--space-xl);
+    }
+    
+    .bookings-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+      
+      .booking-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        .booking-property {
+          display: flex;
+          gap: var(--space-lg);
+          
+          img {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+          }
+          
+          h3 {
+            margin-bottom: var(--space-sm);
+          }
+          
+          .price {
+            color: var(--primary);
+            font-weight: var(--font-weight-bold);
+            font-size: var(--font-size-lg);
+          }
+        }
+        
+        .booking-details {
+          text-align: right;
+          
+          p {
+            color: var(--text-secondary);
+            margin-top: var(--space-sm);
+          }
+        }
+      }
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: var(--space-3xl);
+      
+      h3 {
+        margin-bottom: var(--space-md);
+      }
+      
+      p {
+        color: var(--text-secondary);
+        margin-bottom: var(--space-xl);
+      }
+    }
+  }
+}
