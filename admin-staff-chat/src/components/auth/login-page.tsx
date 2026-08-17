@@ -12,6 +12,7 @@ export function LoginPage() {
   const [step, setStep] = useState<"input" | "otp">("input");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [devOtpHint, setDevOtpHint] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordLogin, setIsPasswordLogin] = useState(false);
   const [password, setPassword] = useState("");
@@ -21,20 +22,21 @@ export function LoginPage() {
     if (!identifier.trim()) return;
     setLoading(true);
     setError("");
+    setDevOtpHint("");
 
     try {
       if (isPasswordLogin) {
-        // Password-based login for admin/staff
-        const res = await authApi.login(identifier, password);
+        const res = await authApi.loginWithPassword(identifier, password);
         handleLoginSuccess(res);
       } else {
-        // OTP-based login
         if (step === "input") {
-          // Request OTP
-          await authApi.login(identifier);
+          const res = await authApi.requestOtp(identifier);
+          if (res.devOtp) {
+            setDevOtpHint(res.devOtp);
+            setOtp(res.devOtp);
+          }
           setStep("otp");
         } else {
-          // Verify OTP
           if (otp.length < 4) {
             setError("Enter a valid OTP");
             return;
@@ -52,7 +54,6 @@ export function LoginPage() {
 
   const handleLoginSuccess = (res: { user: { id: number; username: string; email: string; role: string; avatar?: string; isActive: boolean; phone?: string }; token: string }) => {
     const user = res.user;
-    // Only allow ADMIN and STAFF roles
     if (user.role !== "ADMIN" && user.role !== "STAFF") {
       setError("Access denied. Only admin and staff can use this app.");
       return;
@@ -105,7 +106,7 @@ export function LoginPage() {
             </h2>
             {step === "otp" && (
               <button
-                onClick={() => { setStep("input"); setOtp(""); setError(""); }}
+                onClick={() => { setStep("input"); setOtp(""); setError(""); setDevOtpHint(""); }}
                 className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
@@ -117,7 +118,7 @@ export function LoginPage() {
           {/* Tab Toggle */}
           <div className="flex mb-5 bg-white/5 rounded-xl p-1">
             <button
-              onClick={() => { setIsPasswordLogin(false); setError(""); }}
+              onClick={() => { setIsPasswordLogin(false); setError(""); setDevOtpHint(""); }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                 !isPasswordLogin
                   ? "bg-blue-600 text-white shadow"
@@ -127,7 +128,7 @@ export function LoginPage() {
               OTP Login
             </button>
             <button
-              onClick={() => { setIsPasswordLogin(true); setError(""); }}
+              onClick={() => { setIsPasswordLogin(true); setError(""); setDevOtpHint(""); }}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                 isPasswordLogin
                   ? "bg-blue-600 text-white shadow"
@@ -146,7 +147,7 @@ export function LoginPage() {
                   {isPasswordLogin ? "Email or Username" : "Email or Phone"}
                 </label>
                 <input
-                  type={isPasswordLogin ? "text" : "text"}
+                  type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder={isPasswordLogin ? "admin@greenvalley.com" : "Email or +91 phone number"}
@@ -203,6 +204,13 @@ export function LoginPage() {
             {/* Error */}
             {error && (
               <p className="text-red-400 text-sm bg-red-400/10 rounded-lg px-3 py-2">{error}</p>
+            )}
+
+            {/* Dev OTP hint */}
+            {devOtpHint && (
+              <p className="text-amber-400 text-xs bg-amber-400/10 rounded-lg px-3 py-2">
+                Dev OTP: <span className="font-mono font-bold">{devOtpHint}</span>
+              </p>
             )}
 
             {/* Submit */}

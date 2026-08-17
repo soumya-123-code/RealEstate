@@ -78,18 +78,32 @@ async function request<T>(
   return res.json();
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────
+function isEmail(value: string): boolean {
+  return value.includes("@");
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────
 export const authApi = {
-  login: (identifier: string, otp?: string) =>
-    request<LoginResponse>("/auth/login", {
+  /** Request OTP (email or phone login step 1). Returns { message, devOtp?, ... } */
+  requestOtp: (identifier: string) =>
+    request<{ message: string; devOtp?: string }>("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ identifier, otp }),
+      body: JSON.stringify({ identifier }),
     }),
 
-  verifyOtp: (email: string, otp: string) =>
+  /** Password-based login for admin/staff. */
+  loginWithPassword: (identifier: string, password: string) =>
+    request<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ identifier, password }),
+    }),
+
+  /** Verify OTP — correctly sends email or phone field based on identifier. */
+  verifyOtp: (identifier: string, otp: string) =>
     request<LoginResponse>("/auth/verify-otp", {
       method: "POST",
-      body: JSON.stringify({ email, otp }),
+      body: JSON.stringify(isEmail(identifier) ? { email: identifier, otp } : { phone: identifier, otp }),
     }),
 
   me: () =>
