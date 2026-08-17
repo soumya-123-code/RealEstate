@@ -5,6 +5,7 @@ import { AuthContextProvider } from './context/AuthContext';
 import { SocketContextProvider } from './context/SocketContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SiteContextProvider } from './context/SiteContext';
+import { SupportContextProvider } from './context/SupportContext';
 import ErrorBoundary from './components/errorBoundary/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleGuard from './components/auth/RoleGuard';
@@ -41,7 +42,6 @@ const BlogPostPage = lazy(() => import('./routes/blog/BlogPostPage'));
 const FaqPage = lazy(() => import('./routes/faq/FaqPage'));
 const PrivacyPage = lazy(() => import('./routes/legal/PrivacyPage'));
 const TermsPage = lazy(() => import('./routes/legal/TermsPage'));
-
 const AdminLayout = lazy(() => import('./routes/admin/AdminLayout'));
 const AdminDashboard = lazy(() => import('./routes/admin/AdminDashboard'));
 const AdminProperties = lazy(() => import('./routes/admin/AdminProperties'));
@@ -54,7 +54,6 @@ const AdminChat = lazy(() => import('./routes/admin/AdminChat'));
 const AdminSettings = lazy(() => import('./routes/admin/AdminSettings'));
 const SupportDashboard = lazy(() => import('./routes/admin/SupportDashboard'));
 const CustomerSupport = lazy(() => import('./routes/support/CustomerSupport'));
-
 const AdminCmsAnalytics = lazy(() => import('./routes/admin/cms/AdminAnalytics'));
 const AdminCmsBanners = lazy(() => import('./routes/admin/cms/AdminBanners'));
 const AdminCmsBlogs = lazy(() => import('./routes/admin/cms/AdminBlogs'));
@@ -80,40 +79,33 @@ const guest = (Component) => <GuestOnlyRoute>{ws(Component)}</GuestOnlyRoute>;
 const auth = (Component) => <ProtectedRoute>{ws(Component)}</ProtectedRoute>;
 const adminPanel = (Component) => <RoleGuard allowRoles={[ROLES.ADMIN, ROLES.STAFF]} requireAdminPanel loginPath="/admin/login">{ws(Component)}</RoleGuard>;
 const agentPortal = (Component) => <RoleGuard allowRoles={[ROLES.AGENT]} loginPath="/agent/login">{ws(Component)}</RoleGuard>;
+const supportPanel = (Component) => <SupportContextProvider>{ws(Component)}</SupportContextProvider>;
 
 function App() {
   const router = createBrowserRouter([
     { path: '/', element: <Layout />, errorElement: <NotFound />, children: [
-      { path: '/', element: <HomePage /> }, { path: '/list', element: ws(ListPage) },
-      { path: '/properties', element: <PropertiesAliasRedirect /> }, { path: '/properties/*', element: <PropertiesAliasRedirect /> },
-      { path: '/explore', element: ws(PropertiesListMapview) }, { path: '/property/:id', element: ws(SinglePage) },
-      { path: '/profile', element: auth(ProfilePage) }, { path: '/profile/update', element: auth(ProfileUpdatePage) },
-      { path: '/login', element: guest(Login) }, { path: '/bookings', element: auth(MyBookings) }, { path: '/register', element: guest(Register) },
-      { path: '/about', element: ws(About) }, { path: '/contact', element: ws(Contact) }, { path: '/blog', element: ws(BlogListPage) },
-      { path: '/blog/:slug', element: ws(BlogPostPage) }, { path: '/faq', element: ws(FaqPage) }, { path: '/privacy', element: ws(PrivacyPage) }, { path: '/terms', element: ws(TermsPage) },
+      { path: '/', element: <HomePage /> }, { path: '/list', element: ws(ListPage) }, { path: '/properties', element: <PropertiesAliasRedirect /> }, { path: '/properties/*', element: <PropertiesAliasRedirect /> },
+      { path: '/explore', element: ws(PropertiesListMapview) }, { path: '/property/:id', element: ws(SinglePage) }, { path: '/profile', element: auth(ProfilePage) }, { path: '/profile/update', element: auth(ProfileUpdatePage) },
+      { path: '/login', element: guest(Login) }, { path: '/bookings', element: auth(MyBookings) }, { path: '/register', element: guest(Register) }, { path: '/about', element: ws(About) }, { path: '/contact', element: ws(Contact) },
+      { path: '/blog', element: ws(BlogListPage) }, { path: '/blog/:slug', element: ws(BlogPostPage) }, { path: '/faq', element: ws(FaqPage) }, { path: '/privacy', element: ws(PrivacyPage) }, { path: '/terms', element: ws(TermsPage) },
       { path: '/chat', element: auth(UserChat) }, { path: '/support', element: auth(CustomerSupport) },
     ] },
     { path: '/admin/login', element: guest(AdminLogin) },
     { path: '/admin', element: adminPanel(AdminLayout), errorElement: <NotFound />, children: [
-      { path: '/admin', element: ws(AdminDashboard) }, { path: '/admin/properties', element: ws(AdminProperties) },
-      { path: '/admin/add-property', element: ws(AdminAddProperty) }, { path: '/admin/edit-property/:id', element: ws(AdminEditProperty) },
-      { path: '/admin/bookings', element: ws(AdminBookings) }, { path: '/admin/users', element: ws(AdminUsers) }, { path: '/admin/staff', element: ws(AdminStaff) },
-      { path: '/admin/chat', element: ws(AdminChat) }, { path: '/admin/support', element: ws(SupportDashboard) }, { path: '/admin/settings', element: ws(AdminSettings) },
-      { path: '/admin/cms/analytics', element: ws(AdminCmsAnalytics) }, { path: '/admin/cms/banners', element: ws(AdminCmsBanners) }, { path: '/admin/cms/blogs', element: ws(AdminCmsBlogs) },
-      { path: '/admin/cms/contacts', element: ws(AdminCmsContacts) }, { path: '/admin/cms/faqs', element: ws(AdminCmsFaqs) }, { path: '/admin/cms/leads', element: ws(AdminCmsLeads) },
-      { path: '/admin/cms/pages', element: ws(AdminCmsPages) }, { path: '/admin/cms/pages/:key', element: ws(AdminCmsPageEditor) }, { path: '/admin/cms/partners', element: ws(AdminCmsPartners) },
-      { path: '/admin/cms/seo', element: ws(AdminCmsSeo) }, { path: '/admin/cms/services', element: ws(AdminCmsServices) }, { path: '/admin/cms/team', element: ws(AdminCmsTeam) },
+      { path: '/admin', element: ws(AdminDashboard) }, { path: '/admin/properties', element: ws(AdminProperties) }, { path: '/admin/add-property', element: ws(AdminAddProperty) }, { path: '/admin/edit-property/:id', element: ws(AdminEditProperty) },
+      { path: '/admin/bookings', element: ws(AdminBookings) }, { path: '/admin/users', element: ws(AdminUsers) }, { path: '/admin/staff', element: ws(AdminStaff) }, { path: '/admin/chat', element: ws(AdminChat) },
+      { path: '/admin/support', element: supportPanel(SupportDashboard) }, { path: '/admin/settings', element: ws(AdminSettings) },
+      { path: '/admin/cms/analytics', element: ws(AdminCmsAnalytics) }, { path: '/admin/cms/banners', element: ws(AdminCmsBanners) }, { path: '/admin/cms/blogs', element: ws(AdminCmsBlogs) }, { path: '/admin/cms/contacts', element: ws(AdminCmsContacts) },
+      { path: '/admin/cms/faqs', element: ws(AdminCmsFaqs) }, { path: '/admin/cms/leads', element: ws(AdminCmsLeads) }, { path: '/admin/cms/pages', element: ws(AdminCmsPages) }, { path: '/admin/cms/pages/:key', element: ws(AdminCmsPageEditor) },
+      { path: '/admin/cms/partners', element: ws(AdminCmsPartners) }, { path: '/admin/cms/seo', element: ws(AdminCmsSeo) }, { path: '/admin/cms/services', element: ws(AdminCmsServices) }, { path: '/admin/cms/team', element: ws(AdminCmsTeam) },
       { path: '/admin/cms/testimonials', element: ws(AdminCmsTestimonials) }, { path: '/admin/cms/agents', element: ws(AdminCmsAgents) }, { path: '/admin/cms/navigation', element: ws(AdminCmsNavigation) },
     ] },
     { path: '/staff', element: adminPanel(AdminLayout), errorElement: <NotFound />, children: [
-      { path: '/staff', element: ws(AdminDashboard) }, { path: '/staff/properties', element: ws(AdminProperties) }, { path: '/staff/bookings', element: ws(AdminBookings) },
-      { path: '/staff/chat', element: ws(AdminChat) }, { path: '/staff/support', element: ws(SupportDashboard) },
+      { path: '/staff', element: ws(AdminDashboard) }, { path: '/staff/properties', element: ws(AdminProperties) }, { path: '/staff/bookings', element: ws(AdminBookings) }, { path: '/staff/chat', element: ws(AdminChat) }, { path: '/staff/support', element: supportPanel(SupportDashboard) },
     ] },
     { path: '/agent/login', element: guest(AgentLogin) }, { path: '/agent', element: agentPortal(AgentLayout), errorElement: <NotFound />, children: [{ path: '/agent', element: ws(AgentDashboard) }] },
     { path: '*', element: ws(NotFound) },
   ]);
-
   return <ErrorBoundary><ThemeProvider><AuthContextProvider><SiteContextProvider><SocketContextProvider><RouterProvider router={router} /><Toaster position="top-right" toastOptions={{ duration: 3500, style: { background: '#1e2a45', color: '#fff', borderRadius: '12px', padding: '12px 18px' }, success: { iconTheme: { primary: '#4ade80', secondary: '#fff' } }, error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } } }} /></SocketContextProvider></SiteContextProvider></AuthContextProvider></ThemeProvider></ErrorBoundary>;
 }
-
 export default App;
