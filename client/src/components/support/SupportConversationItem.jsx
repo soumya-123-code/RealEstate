@@ -5,7 +5,7 @@
  */
 
 import { useSocket } from '../../context/SocketContext';
-import { formatDistanceToNow } from 'timeago.js';
+import { format } from 'timeago.js';
 import './SupportConversationItem.scss';
 
 const STATUS_COLORS = {
@@ -30,8 +30,6 @@ function SupportConversationItem({ conversation, isActive, onClick }) {
   const customer = conversation.customer;
   const property = conversation.property;
   const isOnline = isUserOnline(customer?.id);
-  const lastMsgSender = conversation.lastMessageSender;
-  const isLastFromCustomer = lastMsgSender?.id !== conversation.assignedToId && conversation.lastMessageSenderId !== conversation.assignedToId;
   const hasUnread = (conversation.staffUnreadCount || 0) > 0;
 
   const avatarUrl = customer?.avatar
@@ -52,7 +50,6 @@ function SupportConversationItem({ conversation, isActive, onClick }) {
       onClick={onClick}
       style={{ borderLeft: `3px solid ${statusColor}` }}
     >
-      {/* Avatar */}
       <div className="support-conv-item__avatar">
         {avatarUrl ? (
           <img src={avatarUrl} alt={customer?.username} />
@@ -62,14 +59,11 @@ function SupportConversationItem({ conversation, isActive, onClick }) {
         {isOnline && <span className="support-conv-item__online-dot" />}
       </div>
 
-      {/* Main info */}
       <div className="support-conv-item__body">
         <div className="support-conv-item__top">
           <strong>{customer?.username || 'Unknown'}</strong>
           <small>
-            {conversation.lastMessageAt
-              ? formatDistanceToNow(new Date(conversation.lastMessageAt))
-              : ''}
+            {conversation.lastMessageAt ? format(conversation.lastMessageAt) : ''}
           </small>
         </div>
 
