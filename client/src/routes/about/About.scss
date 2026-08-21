@@ -1,3 +1,5 @@
+@import '../../styles/brand-images';
+
 // ========================================
 // ABOUT PAGE - Professional Company Page
 // ========================================
@@ -15,7 +17,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(150deg, #10263a 0%, #17324d 55%, #1d3a55 100%);
+  background:
+    linear-gradient(150deg, rgba(15, 51, 36, 0.92) 0%, rgba(26, 86, 56, 0.85) 55%, rgba(45, 122, 82, 0.78) 100%),
+    url($img-about-hero) center/cover;
   overflow: hidden;
 
   &::before {
@@ -383,7 +387,7 @@
       border-color: rgba(23, 50, 77, 0.12);
 
       .service-icon-wrapper {
-        background: linear-gradient(135deg, #17324d, #2d5a7b);
+        background: var(--primary-gradient);
         color: white;
         transform: scale(1.08);
       }
@@ -461,7 +465,7 @@
       .avatar-placeholder {
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, #17324d, #2d5a7b);
+        background: var(--primary-gradient);
         color: white;
         display: flex;
         align-items: center;
@@ -533,7 +537,7 @@
 // ========================================
 .about-cta {
   padding: 100px 0;
-  background: linear-gradient(150deg, #10263a 0%, #17324d 55%, #1d3a55 100%);
+  background: var(--primary-gradient);
   position: relative;
   overflow: hidden;
 

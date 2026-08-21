@@ -227,6 +227,7 @@ app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") return res.status(400).json({ message: "File too large. Maximum size is 5MB." });
   if (err.code === "LIMIT_UNEXPECTED_FILE") return res.status(400).json({ message: "Unexpected file field." });
   if (err.message === "Only image files are allowed!") return res.status(400).json({ message: err.message });
+  if (err.message === "File type not allowed!") return res.status(400).json({ message: "This file type is not allowed." });
   if (err.code === "P2002") return res.status(400).json({ message: "A record with this data already exists." });
   if (err.code === "P2025") return res.status(404).json({ message: "Record not found." });
   const statusCode = err.statusCode || 500;

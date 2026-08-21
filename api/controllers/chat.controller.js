@@ -2,15 +2,26 @@ import prisma from "../lib/prisma.js";
 
 const isInternalRole = (role) => role === "ADMIN" || role === "STAFF";
 
-const internalChatFilter = (req) => isInternalRole(req.userRole)
-  ? { participants: { every: { user: { role: { in: ["ADMIN", "STAFF"] } } } } }
-  : {};
+/**
+ * Where-clause scoping a chat query to chats the token user participates in.
+ * For ADMIN/STAFF it additionally restricts to internal-only chats
+ * (every participant is ADMIN/STAFF), so support/customer chats are excluded.
+ * The two participant conditions must be AND-combined — spreading one over
+ * the other drops the membership check and leaks other people's chats.
+ */
+const chatScope = (req, tokenUserId) => {
+  const mine = { participants: { some: { userId: tokenUserId } } };
+  if (!isInternalRole(req.userRole)) return mine;
+  return {
+    AND: [mine, { participants: { every: { user: { role: { in: ["ADMIN", "STAFF"] } } } } }],
+  };
+};
 
 export const getChats = async (req, res) => {
   const tokenUserId = Number(req.userId);
   try {
     const chats = await prisma.chat.findMany({
-      where: { participants: { some: { userId: tokenUserId } }, ...internalChatFilter(req) },
+      where: chatScope(req, tokenUserId),
       include: {
         participants: { include: { user: { select: { id: true, username: true, email: true, avatar: true, phone: true, role: true } } } },
         messages: { orderBy: { createdAt: "desc" }, take: 1 },
@@ -43,7 +54,7 @@ export const getChat = async (req, res) => {
   const chatId = Number(req.params.id);
   try {
     const chat = await prisma.chat.findFirst({
-      where: { id: chatId, participants: { some: { userId: tokenUserId } }, ...internalChatFilter(req) },
+      where: { id: chatId, ...chatScope(req, tokenUserId) },
       include: {
         messages: { orderBy: { createdAt: "asc" }, include: { user: { select: { id: true, username: true, avatar: true, role: true } } } },
         participants: { include: { user: { select: { id: true, username: true, email: true, avatar: true, phone: true, role: true } } } },
@@ -73,7 +84,11 @@ export const addChat = async (req, res) => {
     }
 
     const existing = await prisma.chat.findFirst({
-      where: { AND: [{ participants: { some: { userId: tokenUserId } } }, { participants: { some: { userId: receiverId } } }], ...internalChatFilter(req) },
+      where: { AND: [
+        { participants: { some: { userId: tokenUserId } } },
+        { participants: { some: { userId: receiverId } } },
+        ...(isInternalRole(req.userRole) ? [{ participants: { every: { user: { role: { in: ["ADMIN", "STAFF"] } } } } }] : []),
+      ] },
       include: { participants: { include: { user: { select: { id: true, username: true, email: true, avatar: true, phone: true, role: true } } } } },
     });
     if (existing) return res.status(200).json({ ...existing, receiver: existing.participants.find((p) => p.userId !== tokenUserId)?.user });
@@ -90,7 +105,7 @@ export const readChat = async (req, res) => {
   const tokenUserId = Number(req.userId);
   const chatId = Number(req.params.id);
   try {
-    const chat = await prisma.chat.findFirst({ where: { id: chatId, participants: { some: { userId: tokenUserId } }, ...internalChatFilter(req) }, select: { id: true } });
+    const chat = await prisma.chat.findFirst({ where: { id: chatId, ...chatScope(req, tokenUserId) }, select: { id: true } });
     if (!chat) return res.status(404).json({ message: "Chat not found!" });
     await prisma.chatParticipant.updateMany({ where: { chatId, userId: tokenUserId }, data: { hasSeen: true } });
     return res.status(200).json({ message: "Chat marked as read" });

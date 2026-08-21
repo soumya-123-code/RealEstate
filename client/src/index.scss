@@ -3,49 +3,52 @@
 // ========================================
 
 :root {
-  // Brand Colors - Suretreaven Premium Theme
-  --primary: #17324d;
-  --primary-light: #2d5a7b;
-  --primary-dark: #10263a;
-  --primary-gradient: linear-gradient(160deg, #17324d 0%, #1f3f5c 100%);
+  // Brand Colors — Odisha-inspired: forest green + earthy sandstone gold
+  --primary: #1a5638;
+  --primary-light: #2d7a52;
+  --primary-dark: #0f3324;
+  --primary-gradient: linear-gradient(160deg, #0f3324 0%, #1a5638 55%, #2d7a52 100%);
 
-  --secondary: #c59a4a;
-  --secondary-light: #d7b56d;
-  --secondary-dark: #9b7432;
+  --secondary: #c4956a;
+  --secondary-light: #d4ad82;
+  --secondary-dark: #9a7048;
 
-  --accent: #8b6f3d;
-  --accent-light: #b59a68;
-  --accent-dark: #6b522d;
+  --accent: #8b6914;
+  --accent-light: #a8832a;
+  --accent-dark: #6b5010;
 
   // Semantic Colors
   --success: #2f7d5b;
   --warning: #b8860b;
   --danger: #b33a3a;
-  --info: #3a6d9b;
+  --info: #3a7a6b;
 
   // Neutral Colors - Light Mode
-  --bg-primary: #fcfaf6;
-  --bg-secondary: #f4f0e8;
-  --bg-tertiary: #ebe4d8;
-  --bg-overlay: rgba(16, 24, 32, 0.55);
+  --bg-primary: #f8faf7;
+  --bg-secondary: #eef4ee;
+  --bg-tertiary: #dfe9df;
+  --bg-overlay: rgba(15, 51, 36, 0.55);
   --bg-card: #ffffff;
 
-  --text-primary: #1d2a36;
-  --text-secondary: #5f6b74;
-  --text-tertiary: #8a939a;
+  --text-primary: #1a2e22;
+  --text-secondary: #4a6356;
+  --text-tertiary: #7a9488;
   --text-inverse: #ffffff;
 
-  --border-color: #ddd5c8;
-  --border-light: #ebe5db;
-  --border-dark: #b6ad9f;
+  --border-color: #c8d9c8;
+  --border-light: #dde8dd;
+  --border-dark: #9bb09b;
+
+  // Subtle Konark-inspired decorative pattern
+  --pattern-konark: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%231a5638' stroke-opacity='0.07' stroke-width='0.6'%3E%3Cpath d='M30 4 L34 18 L48 18 L37 27 L41 41 L30 33 L19 41 L23 27 L12 18 L26 18 Z'/%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/svg%3E");
 
   // Shadows — restrained
-  --shadow-xs: 0 1px 2px rgba(23, 50, 77, 0.04);
-  --shadow-sm: 0 2px 6px rgba(23, 50, 77, 0.06);
-  --shadow-md: 0 6px 16px rgba(23, 50, 77, 0.08);
-  --shadow-lg: 0 12px 28px rgba(23, 50, 77, 0.1);
-  --shadow-xl: 0 18px 40px rgba(23, 50, 77, 0.12);
-  --shadow-2xl: 0 24px 48px rgba(23, 50, 77, 0.14);
+  --shadow-xs: 0 1px 2px rgba(26, 86, 56, 0.04);
+  --shadow-sm: 0 2px 6px rgba(26, 86, 56, 0.06);
+  --shadow-md: 0 6px 16px rgba(26, 86, 56, 0.08);
+  --shadow-lg: 0 12px 28px rgba(26, 86, 56, 0.1);
+  --shadow-xl: 0 18px 40px rgba(26, 86, 56, 0.12);
+  --shadow-2xl: 0 24px 48px rgba(26, 86, 56, 0.14);
   --shadow-glow: none;
 
   // Border Radius — classic, restrained
@@ -100,24 +103,24 @@
 
 // Dark Mode
 [data-theme="dark"] {
-  --primary: #2d5a7b;
-  --primary-light: #416b88;
-  --primary-dark: #17324d;
+  --primary: #3d9e6a;
+  --primary-light: #52b87e;
+  --primary-dark: #1a5638;
   
-  --bg-primary: #0a0e0f;
-  --bg-secondary: #1a1f21;
-  --bg-tertiary: #252b2d;
+  --bg-primary: #0a120e;
+  --bg-secondary: #121f18;
+  --bg-tertiary: #1a2e22;
   --bg-overlay: rgba(0, 0, 0, 0.8);
-  --bg-card: #1a1f21;
+  --bg-card: #121f18;
   
-  --text-primary: #f8f9fa;
-  --text-secondary: #adb5bd;
-  --text-tertiary: #6c757d;
-  --text-inverse: #0a0e0f;
+  --text-primary: #eef4ee;
+  --text-secondary: #9bb09b;
+  --text-tertiary: #6a8578;
+  --text-inverse: #0a120e;
   
-  --border-color: #2d3436;
-  --border-light: #252b2d;
-  --border-dark: #495057;
+  --border-color: #2a4034;
+  --border-light: #1f3328;
+  --border-dark: #4a6356;
   
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
@@ -203,13 +206,13 @@ input,
 textarea,
 select {
   &:focus-visible {
-    outline: 3px solid rgba(197, 154, 74, 0.28);
+    outline: 3px solid rgba(196, 149, 106, 0.32);
     outline-offset: 2px;
   }
 }
 
 ::selection {
-  background: rgba(197, 154, 74, 0.24);
+  background: rgba(196, 149, 106, 0.24);
   color: var(--text-primary);
 }
 

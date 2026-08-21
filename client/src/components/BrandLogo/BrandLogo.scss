@@ -1,6 +1,6 @@
 .brand-logo {
-  --brand-navy: var(--primary, #17324d);
-  --brand-gold: var(--secondary, #c59a4a);
+  --brand-navy: var(--primary, #1a5638);
+  --brand-gold: var(--secondary, #c4956a);
 
   display: inline-flex;
   align-items: center;
@@ -67,9 +67,9 @@
     background: linear-gradient(
       180deg,
       transparent,
-      rgba(23, 50, 77, 0.18) 30%,
-      rgba(197, 154, 74, 0.45) 50%,
-      rgba(23, 50, 77, 0.18) 70%,
+      rgba(26, 86, 56, 0.18) 30%,
+      rgba(196, 149, 106, 0.45) 50%,
+      rgba(26, 86, 56, 0.18) 70%,
       transparent
     );
     flex-shrink: 0;
@@ -188,8 +188,8 @@
 
     .brand-logo__window path,
     .brand-logo__a-door {
-      stroke: var(--primary-dark, #10263a);
-      fill: var(--primary-dark, #10263a);
+      stroke: var(--primary-dark, #0f3324);
+      fill: var(--primary-dark, #0f3324);
     }
 
     .brand-logo__divider {

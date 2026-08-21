@@ -3,6 +3,7 @@ import { parseImages, formatPrice, formatArea } from '../../lib/utils';
 import { FiMapPin, FiMaximize, FiDroplet } from 'react-icons/fi';
 import { MdKingBed } from 'react-icons/md';
 import LazyImage from '../LazyImage/LazyImage';
+import { PLACEHOLDER_PROPERTY } from '../../lib/brand-images';
 import './Card.scss';
 
 function Card({ property, item }) {
@@ -18,7 +19,7 @@ function Card({ property, item }) {
       <Link to={`/property/${property.id}`} className="card-link">
         <div className="card-image">
           <LazyImage
-            src={images[0] || '/placeholder-land.jpg'}
+            src={images[0] || PLACEHOLDER_PROPERTY}
             alt={property.title}
             loading="lazy"
           />

@@ -153,7 +153,7 @@ function SupportChatWindow({ onToggleInfo }) {
         onSend={handleSend}
         onUpload={handleFileUpload}
         onTyping={(isTyping) => emitTyping(activeConversation.id, isTyping)}
-        disabled={activeConversation.status === 'ARCHIVED'}
+        disabled={activeConversation.status === 'CLOSED'}
       />
     </div>
   );

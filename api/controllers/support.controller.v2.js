@@ -128,14 +128,22 @@ export const createCustomerConversation = async (req, res) => {
     let validPropertyId=null,validBookingId=null;
     if(propertyId!=null){const p=await prisma.property.findUnique({where:{id:Number(propertyId)},select:{id:true}});if(!p)return res.status(404).json({message:"Property not found."});validPropertyId=p.id;}
     if(bookingId!=null){const b=await prisma.booking.findFirst({where:{id:Number(bookingId),userId:customerId},select:{id:true,propertyId:true}});if(!b)return res.status(404).json({message:"Booking not found."});validBookingId=b.id;if(!validPropertyId)validPropertyId=b.propertyId;}
-    const chat=await prisma.chat.create({data:{participants:{create:{userId:customerId,hasSeen:true}}}});
-    const insert=await prisma.$queryRawUnsafe(`INSERT INTO support_conversations(chatId,customerId,propertyId,bookingId,type,status,subject,customerUnreadCount,staffUnreadCount,createdAt,updatedAt) VALUES(?,?,?,?,'CUSTOMER_SUPPORT','OPEN',?,0,?,NOW(3),NOW(3))`,chat.id,customerId,validPropertyId,validBookingId,String(subject||"Support request").trim().slice(0,255),clean?1:0);
-    const id=Number(insert.insertId);
-    if(clean){const m=await prisma.message.create({data:{chatId:chat.id,userId:customerId,text:clean}});await prisma.$executeRawUnsafe(`INSERT INTO support_message_meta(messageId,attachments,readReceipts,isInternal) VALUES(?,?,?,FALSE)`,m.id,JSON.stringify([]),JSON.stringify([{userId:customerId,readAt:new Date().toISOString()}]));await prisma.chat.update({where:{id:chat.id},data:{lastMessage:clean}});}
-    const conversation=await getConversation(req,id); const staff=await activeSupportStaff();
-    await notify(staff,"New support conversation",`A new customer support conversation #${id} is waiting.`,`/admin/support?conversation=${id}`);
-    emitToUsers(req,staff,"support:newConversation",{conversationId:id,conversation});
-    return res.status(201).json(conversation);
+    let chat=null;
+    try{
+      chat=await prisma.chat.create({data:{participants:{create:{userId:customerId,hasSeen:true}}}});
+      const insert=await prisma.$queryRawUnsafe(`INSERT INTO support_conversations(chatId,customerId,propertyId,bookingId,type,status,subject,customerUnreadCount,staffUnreadCount,createdAt,updatedAt) VALUES(?,?,?,?,'CUSTOMER_SUPPORT','OPEN',?,0,?,NOW(3),NOW(3))`,chat.id,customerId,validPropertyId,validBookingId,String(subject||"Support request").trim().slice(0,255),clean?1:0);
+      const id=Number(insert.insertId);
+      if(!Number.isInteger(id)||id<=0)throw new Error("support_conversations insert failed");
+      if(clean){const m=await prisma.message.create({data:{chatId:chat.id,userId:customerId,text:clean}});await prisma.$executeRawUnsafe(`INSERT INTO support_message_meta(messageId,attachments,readReceipts,isInternal) VALUES(?,?,?,FALSE)`,m.id,JSON.stringify([]),JSON.stringify([{userId:customerId,readAt:new Date().toISOString()}]));await prisma.chat.update({where:{id:chat.id},data:{lastMessage:clean}});}
+      const conversation=await getConversation(req,id); const staff=await activeSupportStaff();
+      await notify(staff,"New support conversation",`A new customer support conversation #${id} is waiting.`,`/admin/support?conversation=${id}`);
+      emitToUsers(req,staff,"support:newConversation",{conversationId:id,conversation});
+      return res.status(201).json(conversation);
+    }catch(inner){
+      // Roll back the Chat row so a failed conversation insert doesn't leave orphans.
+      if(chat)await prisma.chat.delete({where:{id:chat.id}}).catch(()=>{});
+      throw inner;
+    }
   }catch(e){console.error(e);return res.status(500).json({message:"Failed to create support conversation."});}
 };
 
@@ -150,8 +158,8 @@ export const sendMessage = async (req,res)=>{
     const message=await prisma.message.create({data:{chatId:c.chatId,userId:Number(req.userId),text:text||""}});await prisma.$executeRawUnsafe(`INSERT INTO support_message_meta(messageId,attachments,readReceipts,isInternal) VALUES(?,?,?,FALSE)`,message.id,JSON.stringify(attachments),JSON.stringify([{userId:Number(req.userId),readAt:new Date().toISOString()}]));await prisma.chat.update({where:{id:c.chatId},data:{lastMessage:text||"[attachment]",updatedAt:new Date()}});
     const wasUnread=canManage(req)?c.customerUnreadCount:c.staffUnreadCount;const update=canManage(req)?"customerUnreadCount=customerUnreadCount+1":"staffUnreadCount=staffUnreadCount+1";await prisma.$executeRawUnsafe(`UPDATE support_conversations SET ${update},status=CASE WHEN status IN ('RESOLVED','CLOSED') THEN 'OPEN' ELSE status END,updatedAt=NOW(3) WHERE id=?`,id);
     const rows=await prisma.$queryRawUnsafe(`SELECT m.id,m.chatId,m.userId,m.text,m.createdAt,m.createdAt updatedAt,u.username,u.avatar,u.role,smm.attachments,smm.readReceipts,smm.isInternal,smm.deletedAt,smm.editedAt,'TEXT' type FROM Message m JOIN User u ON u.id=m.userId LEFT JOIN support_message_meta smm ON smm.messageId=m.id WHERE m.id=?`,message.id);const saved=hydrateMessage(rows[0]);
-    if(canManage(req)){await notify([c.customerId],"Support replied",`You have a new reply in support conversation #${id}.`,`/support?conversation=${id}`);emitToUsers(req,[c.customerId,c.assignedToId],"support:newMessage",{conversationId:id,message:saved,senderInfo:saved.sender});}
-    else{const recipients=c.assignedToId?[c.assignedToId]:await activeSupportStaff();if(wasUnread===0)await notify(recipients,"New customer message",`Customer ${c.customerName} sent a new support message.`,`/admin/support?conversation=${id}`);emitToUsers(req,[...recipients,c.assignedToId],"support:newMessage",{conversationId:id,message:saved,senderInfo:saved.sender});}
+    if(canManage(req)){await notify([c.customerId],"Support replied",`You have a new reply in support conversation #${id}.`,`/support?conversation=${id}`);emitToUsers(req,[c.customerId,c.assignedToId,Number(req.userId)],"support:newMessage",{conversationId:id,message:saved,senderInfo:saved.sender});}
+    else{const recipients=c.assignedToId?[c.assignedToId]:await activeSupportStaff();if(wasUnread===0)await notify(recipients,"New customer message",`Customer ${c.customerName} sent a new support message.`,`/admin/support?conversation=${id}`);emitToUsers(req,[...recipients,c.assignedToId,Number(req.userId)],"support:newMessage",{conversationId:id,message:saved,senderInfo:saved.sender});}
     return res.status(201).json(saved);
   }catch(e){console.error(e);return res.status(500).json({message:"Failed to send message."});}
 };
@@ -159,6 +167,43 @@ export const sendMessage = async (req,res)=>{
 export const markRead=async(req,res)=>{try{const id=Number(req.params.id);const c=await getConversation(req,id);if(!c)return res.status(404).json({message:"Conversation not found."});await prisma.$executeRawUnsafe(`UPDATE support_conversations SET ${canManage(req)?"staffUnreadCount=0":"customerUnreadCount=0"} WHERE id=?`,id);return res.json({ok:true});}catch(e){console.error(e);return res.status(500).json({message:"Failed to mark conversation as read."});}};
 
 export const markMessageRead=async(req,res)=>{try{const id=Number(req.params.id),messageId=Number(req.params.messageId);const c=await getConversation(req,id);if(!c)return res.status(404).json({message:"Conversation not found."});const rows=await prisma.$queryRawUnsafe(`SELECT readReceipts FROM support_message_meta smm JOIN Message m ON m.id=smm.messageId WHERE smm.messageId=? AND m.chatId=?`,messageId,c.chatId);if(!rows.length)return res.status(404).json({message:"Message not found."});const next=[...parseJson(rows[0].readReceipts).filter((r)=>Number(r.userId)!==Number(req.userId)),{userId:Number(req.userId),readAt:new Date().toISOString()}];await prisma.$executeRawUnsafe(`UPDATE support_message_meta SET readReceipts=? WHERE messageId=?`,JSON.stringify(next),messageId);emitToUsers(req,[c.customerId,c.assignedToId],"support:messageRead",{conversationId:id,messageId,readBy:Number(req.userId)});return res.json({ok:true});}catch(e){console.error(e);return res.status(500).json({message:"Failed to mark message as read."});}};
+
+const fetchMessageRow=async(messageId,conversationId)=>{
+  const rows=await prisma.$queryRawUnsafe(`SELECT m.id,m.chatId,m.userId,m.text,m.createdAt,m.createdAt updatedAt,u.username,u.avatar,u.role,smm.attachments,smm.readReceipts,smm.isInternal,smm.deletedAt,smm.editedAt,CASE WHEN smm.attachments IS NOT NULL AND JSON_LENGTH(smm.attachments)>0 THEN 'ATTACHMENT' ELSE 'TEXT' END type FROM Message m JOIN User u ON u.id=m.userId JOIN support_conversations sc ON sc.chatId=m.chatId LEFT JOIN support_message_meta smm ON smm.messageId=m.id WHERE m.id=? AND sc.id=?`,messageId,conversationId);
+  return rows[0]?hydrateMessage(rows[0]):null;
+};
+
+export const editMessage=async(req,res)=>{
+  try{
+    const id=Number(req.params.id),messageId=Number(req.params.messageId);
+    const c=await getConversation(req,id);if(!c)return res.status(404).json({message:"Conversation not found."});
+    const text=typeof req.body?.text==="string"?req.body.text.trim():"";
+    if(!text)return res.status(400).json({message:"Message text is required."});
+    if(text.length>MAX_TEXT)return res.status(400).json({message:`Message must be ${MAX_TEXT} characters or fewer.`});
+    const rows=await prisma.$queryRawUnsafe(`SELECT m.id,m.userId,smm.deletedAt FROM Message m JOIN support_conversations sc ON sc.chatId=m.chat LEFT JOIN support_message_meta smm ON smm.messageId=m.id WHERE m.id=? AND sc.id=?`,messageId,id);
+    if(!rows.length)return res.status(404).json({message:"Message not found."});
+    if(Number(rows[0].userId)!==Number(req.userId))return res.status(403).json({message:"You can only edit your own messages."});
+    if(rows[0].deletedAt)return res.status(400).json({message:"This message was deleted."});
+    await prisma.message.update({where:{id:messageId},data:{text}});
+    await prisma.$executeRawUnsafe(`INSERT INTO support_message_meta(messageId,editedAt) VALUES(?,NOW(3)) ON DUPLICATE KEY UPDATE editedAt=NOW(3)`,messageId);
+    const saved=await fetchMessageRow(messageId,id);
+    emitToUsers(req,[c.customerId,c.assignedToId,Number(req.userId)],"support:messageUpdated",{conversationId:id,message:saved});
+    return res.json(saved);
+  }catch(e){console.error(e);return res.status(500).json({message:"Failed to edit message."});}
+};
+
+export const deleteMessage=async(req,res)=>{
+  try{
+    const id=Number(req.params.id),messageId=Number(req.params.messageId);
+    const c=await getConversation(req,id);if(!c)return res.status(404).json({message:"Conversation not found."});
+    const rows=await prisma.$queryRawUnsafe(`SELECT m.id,m.userId FROM Message m JOIN support_conversations sc ON sc.chatId=m.chat WHERE m.id=? AND sc.id=?`,messageId,id);
+    if(!rows.length)return res.status(404).json({message:"Message not found."});
+    if(Number(rows[0].userId)!==Number(req.userId)&&req.userRole!=="ADMIN")return res.status(403).json({message:"You can only delete your own messages."});
+    await prisma.$executeRawUnsafe(`INSERT INTO support_message_meta(messageId,deletedAt) VALUES(?,NOW(3)) ON DUPLICATE KEY UPDATE deletedAt=NOW(3)`,messageId);
+    emitToUsers(req,[c.customerId,c.assignedToId,Number(req.userId)],"support:messageDeleted",{conversationId:id,messageId});
+    return res.json({ok:true});
+  }catch(e){console.error(e);return res.status(500).json({message:"Failed to delete message."});}
+};
 
 export const assignConversation=async(req,res)=>{if(!canManage(req))return res.status(403).json({message:"Support assignment access required."});try{const id=Number(req.params.id),c=await getConversation(req,id);if(!c)return res.status(404).json({message:"Conversation not found."});const assigned=req.body?.assignedToId==null||req.body.assignedToId===""?null:Number(req.body.assignedToId);if(assigned!=null){const u=await prisma.user.findFirst({where:{id:assigned,role:{in:STAFF_ROLES},isActive:true},select:{id:true}});if(!u)return res.status(400).json({message:"Invalid or inactive staff member."});}await prisma.$executeRawUnsafe(`UPDATE support_conversations SET assignedToId=?,assignedAt=? WHERE id=?`,assigned,assigned?new Date():null,id);const updated=await getConversation(req,id);emitToUsers(req,[c.customerId,c.assignedToId,assigned],"support:assigned",{conversationId:id,assignedToId:assigned,assignedById:Number(req.userId),assignedTo:updated.assignedTo});return res.json({conversation:updated});}catch(e){console.error(e);return res.status(500).json({message:"Failed to assign conversation."});}};
 
@@ -173,5 +218,13 @@ export const deleteNote=async(req,res)=>{if(!canManage(req))return res.status(40
 export const listStaff=async(req,res)=>{if(!canManage(req))return res.status(403).json({message:"Support staff access required."});return res.json(await prisma.user.findMany({where:{role:{in:STAFF_ROLES},isActive:true},select:{id:true,username:true,email:true,phone:true,avatar:true,role:true},orderBy:{username:"asc"}}));};
 export const stats=async(req,res)=>{if(!canManage(req))return res.status(403).json({message:"Support stats access required."});const rows=await prisma.$queryRawUnsafe(`SELECT status,COUNT(*) total FROM support_conversations WHERE type='CUSTOMER_SUPPORT' GROUP BY status`);const out={open:0,pending:0,resolved:0,closed:0,unassigned:0};rows.forEach((r)=>{out[String(r.status).toLowerCase()]=Number(r.total)});const un=await prisma.$queryRawUnsafe(`SELECT COUNT(*) total FROM support_conversations WHERE type='CUSTOMER_SUPPORT' AND assignedToId IS NULL`);out.unassigned=Number(un[0]?.total||0);return res.json(out);};
 
-export const uploadAttachment=async(req,res)=>{if(!req.file)return res.status(400).json({message:"File is required."});return res.status(201).json({name:req.file.originalname,url:`/uploads/${req.file.filename}`,mimeType:req.file.mimetype,size:req.file.size});};
+export const uploadAttachment=async(req,res)=>{
+  try{
+    const id=Number(req.params.id);
+    const c=await getConversation(req,id);
+    if(!c)return res.status(404).json({message:"Conversation not found."});
+    if(!req.file)return res.status(400).json({message:"File is required."});
+    return res.status(201).json({name:req.file.originalname,url:`/uploads/${req.file.filename}`,mimeType:req.file.mimetype,size:req.file.size});
+  }catch(e){console.error(e);return res.status(500).json({message:"Failed to upload attachment."});}
+};
 export const sendAttachment=async(req,res)=>{if(!req.file)return res.status(400).json({message:"File is required."});const attachment={name:req.file.originalname,url:`/uploads/${req.file.filename}`,mimeType:req.file.mimetype,size:req.file.size};req.body={text:"",attachments:[attachment]};return sendMessage(req,res);};

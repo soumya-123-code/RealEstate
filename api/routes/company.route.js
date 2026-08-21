@@ -6,7 +6,7 @@ import {
   uploadPropertyImages,
 } from "../controllers/company.controller.js";
 import { verifyToken, verifyAdmin, requireManageCms } from "../middleware/verifyToken.js";
-import { upload } from "../middleware/upload.js";
+import { uploadImage } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -61,7 +61,7 @@ router.put("/settings", ...settingsWrite, updateCompanySettings);
  *       200:
  *         description: Logo uploaded successfully
  */
-router.post("/upload-logo", ...settingsWrite, upload.single("logo"), uploadCompanyLogo);
+router.post("/upload-logo", ...settingsWrite, uploadImage.single("logo"), uploadCompanyLogo);
 
 /**
  * @openapi
@@ -79,7 +79,7 @@ router.post(
   "/upload-images",
   verifyToken,
   verifyAdmin,
-  upload.array("images", 10),
+  uploadImage.array("images", 10),
   uploadPropertyImages
 );
 

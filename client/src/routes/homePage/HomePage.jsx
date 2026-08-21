@@ -24,6 +24,7 @@ import {
   FiPlay,
   FiSearch,
 } from 'react-icons/fi';
+import { BRAND_IMAGES } from '../../lib/brand-images';
 import './HomePage.scss';
 
 // Animated counter — module-level component so hooks are not created inside a callback
@@ -82,7 +83,7 @@ function HomePage() {
     {
       title: "Find a place you'll be proud to call home.",
       subtitle: 'Premium verified plots, homes, and commercial spaces across Odisha — guided by Suretreaven with clarity and care.',
-      image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85',
+      image: BRAND_IMAGES.hero,
       buttonText: 'Explore Properties',
       buttonLink: '/list',
       badge: 'Trusted Real Estate',

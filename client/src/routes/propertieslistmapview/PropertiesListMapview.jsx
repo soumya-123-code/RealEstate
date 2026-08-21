@@ -6,6 +6,7 @@ import { MdBed, MdBathtub } from 'react-icons/md';
 import apiRequest from '../../lib/apiRequest';
 import toast from 'react-hot-toast';
 import { parseImages } from '../../lib/utils';
+import { PLACEHOLDER_PROPERTY } from '../../lib/brand-images';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './PropertiesListMapview.scss';
@@ -33,7 +34,7 @@ const blueIcon = new L.Icon({
 const getOwner = (property) => property.user || property.agent?.user;
 
 const getPropertyImage = (property) => {
-  const firstImage = parseImages(property.images)[0] || '/placeholder.jpg';
+  const firstImage = parseImages(property.images)[0] || PLACEHOLDER_PROPERTY;
   return firstImage.startsWith('http')
     ? firstImage
     : `${window.location.origin}${firstImage}`;

@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(150deg, #10263a 0%, #17324d 55%, #1d3a55 100%);
+  background: var(--primary-gradient);
   overflow: hidden;
 
   &::before {

@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import apiRequest from '../lib/apiRequest';
 import { formatPrice, formatDate } from '../lib/utils';
+import { PLACEHOLDER_PROPERTY } from '../lib/brand-images';
 import { FiChevronDown, FiChevronUp, FiMessageCircle, FiLoader, FiBox } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import './MyBookings.scss';
@@ -89,7 +90,7 @@ function MyBookings() {
   }, {});
 
   const fullImageUrl = (img) => {
-    if (!img) return '/placeholder.jpg';
+    if (!img) return PLACEHOLDER_PROPERTY;
     if (img.startsWith('http')) return img;
     return `${window.location.origin}${img}`;
   };

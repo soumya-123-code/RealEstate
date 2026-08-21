@@ -6,6 +6,8 @@ import {
   getConversationDetail,
   listMessages,
   sendMessage,
+  editMessage,
+  deleteMessage,
   markRead,
   markMessageRead,
   assignConversation,
@@ -31,8 +33,11 @@ router.post("/chat/conversations", createCustomerConversation);
 router.get("/chat/conversations/:id", getConversationDetail);
 router.get("/chat/conversations/:id/messages", listMessages);
 router.post("/chat/conversations/:id/messages", sendMessage);
+router.patch("/chat/conversations/:id/messages/:messageId", editMessage);
+router.delete("/chat/conversations/:id/messages/:messageId", deleteMessage);
 router.put("/chat/conversations/:id/read", markRead);
 router.post("/chat/conversations/:id/messages/:messageId/read", markMessageRead);
+router.post("/chat/conversations/:id/messages/upload", upload.single("file"), uploadAttachment);
 router.post("/chat/conversations/:id/attachments", upload.single("file"), sendAttachment);
 
 // Admin/staff support queue — controller enforces role/permission and assignment scope.
@@ -42,6 +47,8 @@ router.get("/conversations/staff", listStaff);
 router.get("/conversations/:id", getConversationDetail);
 router.get("/conversations/:id/messages", listMessages);
 router.post("/conversations/:id/messages", sendMessage);
+router.patch("/conversations/:id/messages/:messageId", editMessage);
+router.delete("/conversations/:id/messages/:messageId", deleteMessage);
 router.put("/conversations/:id/read", markRead);
 router.post("/conversations/:id/messages/:messageId/read", markMessageRead);
 router.patch("/conversations/:id/assign", assignConversation);

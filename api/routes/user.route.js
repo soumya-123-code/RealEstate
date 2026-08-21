@@ -8,7 +8,7 @@ import {
   uploadAvatar,
 } from "../controllers/user.controller.js";
 import { verifyToken, verifyAdmin } from "../middleware/verifyToken.js";
-import { upload } from "../middleware/upload.js";
+import { uploadImage } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -57,7 +57,7 @@ router.get("/", verifyToken, verifyAdmin, getUsers);
  *         description: User data
  */
 
-router.post("/upload-avatar", verifyToken, upload.single("avatar"), uploadAvatar);
+router.post("/upload-avatar", verifyToken, uploadImage.single("avatar"), uploadAvatar);
 router.get("/:id", verifyToken, getUser);
 
 /**

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import apiRequest from '../../lib/apiRequest';
 import { parseImages, parseJsonField, formatPrice, formatArea, formatDate } from '../../lib/utils';
+import { PLACEHOLDER_PROPERTY } from '../../lib/brand-images';
 import { FiMapPin, FiMaximize, FiCalendar, FiPhone, FiMail, FiShare2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import './SinglePage.scss';
@@ -120,7 +121,7 @@ function SinglePage() {
             {/* Image Gallery */}
             <div className="image-gallery">
               <div className="main-image">
-                <img src={images[currentImageIndex] || '/placeholder.jpg'} alt={property.title} />
+                <img src={images[currentImageIndex] || PLACEHOLDER_PROPERTY} alt={property.title} />
                 <button className="share-btn" onClick={handleShare}>
                   <FiShare2 /> Share
                 </button>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useSocket } from "../../context/SocketContext";
-import { useAuth } from "../../context/AuthContext";
-import apiRequest from "../../lib/apiRequest";
+import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
+import apiRequest from "../lib/apiRequest";
 import toast from "react-hot-toast";
 
 const API_BASE = "/support/chat";

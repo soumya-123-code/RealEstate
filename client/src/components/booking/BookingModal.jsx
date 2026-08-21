@@ -21,6 +21,7 @@ import { FiX, FiMessageCircle, FiCheck, FiLoader, FiPhone } from 'react-icons/fi
 import { useAuth } from '../../context/AuthContext';
 import apiRequest from '../../lib/apiRequest';
 import { formatPrice } from '../../lib/utils';
+import { PLACEHOLDER_PROPERTY } from '../../lib/brand-images';
 import toast from 'react-hot-toast';
 import './BookingModal.scss';
 
@@ -37,7 +38,7 @@ function BookingModal({ property, onClose }) {
     : typeof property.images === 'string'
     ? (() => { try { return JSON.parse(property.images); } catch { return []; } })()
     : [];
-  const firstImage = images?.[0] || '/placeholder.jpg';
+  const firstImage = images?.[0] || PLACEHOLDER_PROPERTY;
   const fullImageUrl = firstImage?.startsWith('http')
     ? firstImage
     : `${window.location.origin}${firstImage}`;

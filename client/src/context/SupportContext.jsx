@@ -63,7 +63,36 @@ export const SupportContextProvider = ({ children }) => {
   const fetchConversations = useCallback(async (resetPage = false) => {
     setLoadingList(true);
     try {
-      const params = { filter, search, page: resetPage ? 1 : page, limit: 20 };
+      // Translate sidebar filter chips into the query params the backend
+      // `/support/conversations` endpoint understands. The backend overloads
+      // the `filter` query param: it can be a status (OPEN/PENDING/RESOLVED/CLOSED)
+      // OR a special value (`unread`/`assigned`/`unassigned`). For "mine"
+      // we use the dedicated `assignedToId` param instead.
+      const params = { search, page: resetPage ? 1 : page, limit: 20 };
+      let assignedToId;
+      switch (filter) {
+        case 'unread':
+          params.filter = 'unread';
+          break;
+        case 'unassigned':
+          params.filter = 'unassigned';
+          break;
+        case 'mine':
+          // Only show conversations assigned to the current staff member.
+          if (currentUser?.id) assignedToId = currentUser.id;
+          break;
+        case 'resolved':
+          params.filter = 'RESOLVED';
+          break;
+        case 'archived':
+          // The backend has no ARCHIVED status; map to CLOSED.
+          params.filter = 'CLOSED';
+          break;
+        case 'all':
+        default:
+          break;
+      }
+      if (assignedToId != null) params.assignedToId = assignedToId;
       const res = await apiRequest.get('/support/conversations', { params });
       setConversations(res.data.conversations);
       setPagination(res.data.pagination);
@@ -76,7 +105,7 @@ export const SupportContextProvider = ({ children }) => {
     } finally {
       setLoadingList(false);
     }
-  }, [filter, search, page]);
+  }, [filter, search, page, currentUser]);
 
   // ========================================
   // Fetch single conversation

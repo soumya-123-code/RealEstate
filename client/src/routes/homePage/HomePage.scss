@@ -1,18 +1,22 @@
+@import '../../styles/brand-images';
+
 .homePage {
-  --home-ink: #15211d;
-  --home-muted: #6d7b74;
-  --home-line: rgba(21, 33, 29, 0.1);
-  --home-green: #17324d;
-  --home-green-soft: #e7edf3;
-  --home-gold: #c59a4a;
-  --home-sky: #416b88;
-  --home-paper: #fbfaf6;
+  --home-ink: #15211a;
+  --home-muted: #5a7268;
+  --home-line: rgba(21, 33, 26, 0.1);
+  --home-green: var(--primary, #1a5638);
+  --home-green-soft: #e4f0e8;
+  --home-gold: var(--secondary, #c4956a);
+  --home-sky: #3a8a62;
+  --home-paper: #f8faf7;
   --home-card: rgba(255, 255, 255, 0.88);
-  --home-shadow: 0 24px 70px rgba(21, 33, 29, 0.14);
+  --home-shadow: 0 24px 70px rgba(21, 33, 26, 0.14);
 
   color: var(--home-ink);
   background:
-    linear-gradient(180deg, #f9fbf8 0%, #fbfaf6 48%, #eef7f2 100%);
+    var(--pattern-konark),
+    linear-gradient(180deg, #f4f9f5 0%, #f8faf7 48%, #e8f2eb 100%);
+  background-size: 60px 60px, 100% 100%;
   overflow: hidden;
 
   .container {
@@ -82,8 +86,8 @@
 
   .hero-bg-gradient {
     background:
-      linear-gradient(120deg, rgba(16, 38, 58, 0.96), rgba(45, 90, 123, 0.72)),
-      url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85') center/cover;
+      linear-gradient(120deg, rgba(15, 51, 36, 0.94), rgba(45, 122, 82, 0.72)),
+      url($img-hero-fallback) center/cover;
   }
 
   .hero-overlay {
@@ -91,9 +95,9 @@
     background:
       linear-gradient(
         105deg,
-        rgba(10, 22, 34, 0.88) 0%,
-        rgba(10, 22, 34, 0.72) 42%,
-        rgba(10, 22, 34, 0.45) 100%
+        rgba(10, 30, 20, 0.88) 0%,
+        rgba(10, 30, 20, 0.72) 42%,
+        rgba(10, 30, 20, 0.42) 100%
       );
   }
 
@@ -247,14 +251,14 @@
       padding: 0 18px;
       border: none;
       border-radius: 2px;
-      background: var(--primary, #17324d);
+      background: var(--primary, #1a5638);
       color: #fff;
       font-weight: 600;
       font-size: 0.875rem;
       cursor: pointer;
 
       &:hover {
-        background: var(--primary-dark, #10263a);
+        background: var(--primary-dark, #0f3324);
       }
     }
 
@@ -322,7 +326,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(23, 98, 63, 0.12), transparent 46%);
+      background: linear-gradient(135deg, rgba(26, 86, 56, 0.12), transparent 46%);
       opacity: 0;
       transition: opacity 0.25s ease;
     }
@@ -400,20 +404,22 @@
   background: var(--home-green);
   color: #fff;
   font-weight: 800;
-  box-shadow: 0 16px 38px rgba(23, 98, 63, 0.24);
+  box-shadow: 0 16px 38px rgba(26, 86, 56, 0.24);
   transition: transform 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
 
   &:hover {
     color: #fff;
-    background: #0f4d31;
-    box-shadow: 0 20px 48px rgba(23, 98, 63, 0.3);
+    background: #0f3324;
+    box-shadow: 0 20px 48px rgba(26, 86, 56, 0.3);
     transform: translateY(-3px);
   }
 }
 
 .features-section {
   background:
-    linear-gradient(180deg, #eef7f2, #fbfaf6);
+    var(--pattern-konark),
+    linear-gradient(180deg, #e8f2eb, #f8faf7);
+  background-size: 60px 60px, 100% 100%;
 
   .features-grid {
     display: grid;
@@ -431,8 +437,8 @@
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 
     &:hover {
-      border-color: rgba(23, 98, 63, 0.28);
-      box-shadow: 0 24px 64px rgba(21, 33, 29, 0.14);
+      border-color: rgba(26, 86, 56, 0.28);
+      box-shadow: 0 24px 64px rgba(21, 33, 26, 0.14);
     }
 
     .feature-icon-wrapper {
@@ -463,8 +469,8 @@
 
 .cities-section {
   background:
-    linear-gradient(rgba(21, 33, 29, 0.82), rgba(21, 33, 29, 0.82)),
-    url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85') center/cover fixed;
+    linear-gradient(rgba(15, 33, 24, 0.84), rgba(15, 33, 24, 0.84)),
+    url($img-cities-bg) center/cover fixed;
 
   .section-header {
     h2,
@@ -505,8 +511,8 @@
       place-items: center;
       margin-bottom: 20px;
       border-radius: 8px;
-      color: #16231e;
-      background: #f0bd4f;
+      color: #0f3324;
+      background: var(--home-gold);
     }
 
     h3 {
@@ -638,7 +644,7 @@
       width: 9px;
       height: 9px;
       border-radius: 999px;
-      background: rgba(23, 98, 63, 0.26);
+      background: rgba(26, 86, 56, 0.26);
       transition: width 0.22s ease, background 0.22s ease;
 
       &.active {
@@ -650,7 +656,7 @@
 }
 
 .partners-section {
-  background: #f6f4ed;
+  background: #eef4e8;
 
   .partners-grid {
     display: grid;
@@ -789,8 +795,8 @@
   padding: 104px 0;
   color: #fff;
   background:
-    linear-gradient(120deg, rgba(14, 62, 41, 0.96), rgba(18, 80, 59, 0.9)),
-    url('https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1800&q=85') center/cover;
+    linear-gradient(120deg, rgba(15, 51, 36, 0.94), rgba(26, 86, 56, 0.88)),
+    url($img-cta-bg) center/cover;
 
   .cta-content {
     width: min(760px, 100%);

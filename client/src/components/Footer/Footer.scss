@@ -13,7 +13,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
     background-size: 200% auto;
     animation: gradientShift 3s linear infinite;
   }
@@ -106,7 +106,7 @@
           color: white;
           border-color: transparent;
           transform: translateY(-5px) rotate(5deg);
-          box-shadow: 0 8px 16px rgba(46, 125, 50, 0.3);
+          box-shadow: 0 8px 16px rgba(26, 86, 56, 0.3);
 
           &::before {
             width: 100%;
