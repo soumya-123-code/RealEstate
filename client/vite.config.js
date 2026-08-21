@@ -29,6 +29,14 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: apiTarget.startsWith('https'),
         },
+        // Socket.IO must be proxied to the API server during local development.
+        // Without this, the client connects to Vite (5173) instead of Socket.IO (8800).
+        '/socket.io': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: apiTarget.startsWith('https'),
+          ws: true,
+        },
       },
     },
     build: {
