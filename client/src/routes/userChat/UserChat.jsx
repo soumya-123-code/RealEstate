@@ -81,16 +81,21 @@ function MessageRow({ msg, isMine, showAvatar, sender }) {
 
 // ── New Chat Modal ────────────────────────────────────────────────────────────
 function NewChatModal({ onClose, onSelect }) {
+  const { currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     apiRequest.get('/users/admin')
-      .then(r => setUsers(r.data ? [r.data] : []))
+      .then(r => {
+        const data = r.data;
+        const list = Array.isArray(data?.contacts) ? data.contacts : (data ? [data] : []);
+        setUsers(list.filter(u => u?.id && Number(u.id) !== Number(currentUser?.id)));
+      })
       .catch(() => toast.error('Failed to load users'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentUser?.id]);
 
   const filtered = users.filter(u =>
     u.username?.toLowerCase().includes(search.toLowerCase()) ||
@@ -334,7 +339,7 @@ export default function UserChat() {
         setMessages(prev => {
           // Dedupe by id — the same message can arrive via socket echo
           // while the saved row is already in the list.
-          if (data.id != null && prev.some(m => m.id === data.id)) return prev;
+          if (data.id != null && prev.some(m => Number(m.id) === Number(data.id))) return prev;
           return [...prev, {
             id       : data.id ?? `sock_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
             text     : data.text,

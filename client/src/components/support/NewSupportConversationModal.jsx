@@ -31,7 +31,7 @@ function NewSupportConversationModal({ onClose }) {
     try {
       // Use admin user list endpoint with search
       const res = await apiRequest.get('/users', {
-        params: { search, role: 'USER' },
+        params: { q: search, role: 'USER' },
       });
       // Filter to USER role
       const userRoleUsers = (res.data || []).filter((u) => u.role === 'USER');

@@ -94,8 +94,9 @@ export const SupportContextProvider = ({ children }) => {
       }
       if (assignedToId != null) params.assignedToId = assignedToId;
       const res = await apiRequest.get('/support/conversations', { params });
-      setConversations(res.data.conversations);
-      setPagination(res.data.pagination);
+      const rows = Array.isArray(res.data?.conversations) ? res.data.conversations : (Array.isArray(res.data) ? res.data : []);
+      setConversations(rows);
+      setPagination(res.data.pagination || { total: rows.length, page: 1, limit: rows.length, totalPages: 1 });
       if (resetPage) setPage(1);
     } catch (err) {
       console.error('fetchConversations error:', err);
@@ -399,14 +400,13 @@ export const SupportContextProvider = ({ children }) => {
   // Fetch admin stats
   // ========================================
   const fetchStats = useCallback(async () => {
-    if (currentUser?.role !== 'ADMIN') return;
     try {
       const res = await apiRequest.get('/support/conversations/admin/stats');
       setStats(res.data);
     } catch (err) {
       console.error('fetchStats error:', err);
     }
-  }, [currentUser]);
+  }, []);
 
   // ========================================
   // Socket event listeners
@@ -415,11 +415,13 @@ export const SupportContextProvider = ({ children }) => {
     if (!socket) return;
 
     const handleNewMessage = ({ conversationId, message, senderInfo }) => {
-      // Update sidebar preview
+      const cid = Number(conversationId);
+      const isActive = Number(activeConversationIdRef.current) === cid;
+      const isOwn = Number(message?.senderId) === Number(currentUser?.id);
+
       setConversations((prev) => {
-        const idx = prev.findIndex((c) => c.id === conversationId);
+        const idx = prev.findIndex((c) => Number(c.id) === cid);
         if (idx === -1) {
-          // New conversation — refresh list
           fetchConversations();
           return prev;
         }
@@ -432,30 +434,28 @@ export const SupportContextProvider = ({ children }) => {
           lastMessageType: message.attachments?.[0]?.type?.toLowerCase() || 'text',
           updatedAt: message.createdAt,
           staffUnreadCount:
-            message.senderId !== currentUser?.id
+            !isOwn && !isActive
               ? (updated[idx].staffUnreadCount || 0) + 1
-              : updated[idx].staffUnreadCount,
+              : isActive ? 0 : updated[idx].staffUnreadCount,
         };
-        // Move to top
         const [item] = updated.splice(idx, 1);
         updated.unshift(item);
         return updated;
       });
 
-      // Append to active conversation messages if it's the open one
-      if (activeConversationIdRef.current === conversationId) {
+      if (isActive) {
         setActiveConversation((prev) => {
           if (!prev) return prev;
           // Avoid duplicates
-          if (prev.messages?.some((m) => m.id === message.id)) return prev;
+          if (prev.messages?.some((m) => Number(m.id) === Number(message.id))) return prev;
           return { ...prev, messages: [...(prev.messages || []), message] };
         });
 
         // Auto-mark as read if active and message is from customer
         if (message.senderId !== currentUser?.id) {
-          markMessageRead(conversationId, message.id);
+          markMessageRead(cid, message.id);
         }
-      } else if (message.senderId !== currentUser?.id) {
+      } else if (!isOwn) {
         // Toast notification for inactive conversation
         toast.custom(
           (t) => (
@@ -471,7 +471,7 @@ export const SupportContextProvider = ({ children }) => {
                 cursor: 'pointer',
               }}
               onClick={() => {
-                selectConversation(conversationId);
+                selectConversation(cid);
                 toast.dismiss(t.id);
               }}
             >

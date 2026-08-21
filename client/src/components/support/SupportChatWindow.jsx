@@ -11,17 +11,14 @@
  * Empty state: shows placeholder when no conversation selected.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useSupport } from '../../context/SupportContext';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
-import { useCall } from '../../context/CallContext';
 import SupportChatHeader from './SupportChatHeader';
 import SupportMessageBubble from './SupportMessageBubble';
 import SupportMessageComposer from './SupportMessageComposer';
-import apiRequest from '../../lib/apiRequest';
-import { format } from 'timeago.js';
-import { FiMessageCircle, FiChevronDown } from 'react-icons/fi';
+import { FiMessageCircle } from 'react-icons/fi';
 import './SupportChatWindow.scss';
 
 function SupportChatWindow({ onToggleInfo }) {
@@ -36,8 +33,7 @@ function SupportChatWindow({ onToggleInfo }) {
     emitTyping,
   } = useSupport();
   const { currentUser } = useAuth();
-  const { isUserOnline } = useSocket();
-  const { startCall } = useCall();
+  const { isUserOnline, startCall } = useSocket();
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -69,22 +65,12 @@ function SupportChatWindow({ onToggleInfo }) {
 
   const handleAudioCall = useCallback(() => {
     if (!activeConversation?.customer) return;
-    startCall(activeConversation.customer.id, 'AUDIO', {
-      id: activeConversation.customer.id,
-      username: activeConversation.customer.username,
-      avatar: activeConversation.customer.avatar,
-      role: activeConversation.customer.role,
-    });
+    startCall(activeConversation.customer, activeConversation.chatId, 'audio');
   }, [activeConversation, startCall]);
 
   const handleVideoCall = useCallback(() => {
     if (!activeConversation?.customer) return;
-    startCall(activeConversation.customer.id, 'VIDEO', {
-      id: activeConversation.customer.id,
-      username: activeConversation.customer.username,
-      avatar: activeConversation.customer.avatar,
-      role: activeConversation.customer.role,
-    });
+    startCall(activeConversation.customer, activeConversation.chatId, 'video');
   }, [activeConversation, startCall]);
 
   if (!activeConversation) {
@@ -129,7 +115,7 @@ function SupportChatWindow({ onToggleInfo }) {
             <SupportMessageBubble
               key={msg.id}
               message={msg}
-              isOwn={msg.senderId === currentUser?.id}
+              isOwn={Number(msg.senderId ?? msg.userId) === Number(currentUser?.id)}
               conversationId={activeConversation.id}
               currentUserId={currentUser?.id}
               onMarkRead={(msgId) => markMessageRead(activeConversation.id, msgId)}

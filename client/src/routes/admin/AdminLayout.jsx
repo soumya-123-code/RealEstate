@@ -19,6 +19,7 @@ const PAGE_TITLES = {
   '/admin/users': 'Users',
   '/admin/staff': 'Staff Management',
   '/admin/chat': 'Chat',
+  '/admin/support': 'Support',
   '/admin/settings': 'Website Settings',
   '/admin/cms/pages': 'Pages & Sections',
   '/admin/cms/navigation': 'Navigation',
@@ -45,6 +46,7 @@ const PAGE_SUBTITLES = {
   '/admin/users': 'Registered accounts',
   '/admin/staff': 'Admin & staff roles',
   '/admin/chat': 'Live conversations',
+  '/admin/support': 'Customer support inbox',
   '/admin/settings': 'Company info, social links, stats & SEO defaults',
   '/admin/cms/pages': 'Compose and publish public page layouts',
   '/admin/cms/navigation': 'Header & footer links',
@@ -113,11 +115,17 @@ const NAV = [
     ],
   },
   {
+    section: 'INBOX',
+    items: [
+      { to: '/admin/chat', icon: FiMessageCircle, label: 'Chat' },
+      { to: '/admin/support', icon: FiHelpCircle, label: 'Support' },
+    ],
+  },
+  {
     section: 'SYSTEM',
     adminOnly: true,
     items: [
       { to: '/admin/staff', icon: FiShield, label: 'Staff Management' },
-      { to: '/admin/chat', icon: FiMessageCircle, label: 'Chat' },
       { to: '/admin/settings', icon: FiSettings, label: 'Website Settings' },
     ],
   },
@@ -241,7 +249,7 @@ function AdminLayout() {
   }, [location.pathname]);
 
   const getPageTitle = () => {
-    const basePath = '/admin' + (location.pathname.split('/admin')[1] || '');
+    const basePath = location.pathname.replace(/^\/staff/, '/admin');
     if (PAGE_TITLES[basePath]) return PAGE_TITLES[basePath];
     for (const [key, value] of Object.entries(PAGE_TITLES)) {
       if (basePath.startsWith(key) && key !== '/admin') return value;
@@ -250,7 +258,7 @@ function AdminLayout() {
   };
 
   const getPageSubtitle = () => {
-    const basePath = '/admin' + (location.pathname.split('/admin')[1] || '');
+    const basePath = location.pathname.replace(/^\/staff/, '/admin');
     return PAGE_SUBTITLES[basePath] || '';
   };
 

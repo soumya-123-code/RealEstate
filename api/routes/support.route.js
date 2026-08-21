@@ -2,6 +2,7 @@ import express from "express";
 import {
   listCustomerConversations,
   createCustomerConversation,
+  createStaffConversation,
   listStaffConversations,
   getConversationDetail,
   listMessages,
@@ -42,6 +43,7 @@ router.post("/chat/conversations/:id/attachments", upload.single("file"), sendAt
 
 // Admin/staff support queue — controller enforces role/permission and assignment scope.
 router.get("/conversations", listStaffConversations);
+router.post("/conversations", createStaffConversation);
 router.get("/conversations/admin/stats", stats);
 router.get("/conversations/staff", listStaff);
 router.get("/conversations/:id", getConversationDetail);

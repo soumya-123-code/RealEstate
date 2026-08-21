@@ -1,8 +1,8 @@
 import prisma from "../lib/prisma.js";
 
 export const addMessage = async (req, res) => {
-  const tokenUserId = parseInt(req.userId); // ⭐ Convert to Int
-  const chatId = parseInt(req.params.chatId); // ⭐ Convert to Int
+  const tokenUserId = parseInt(req.userId, 10);
+  const chatId = parseInt(req.params.chatId, 10);
   const text = typeof req.body.text === "string" ? req.body.text.trim() : "";
 
   if (!text) return res.status(400).json({ message: "Message text is required." });
@@ -38,6 +38,7 @@ export const addMessage = async (req, res) => {
             id: true,
             username: true,
             avatar: true,
+            role: true,
           },
         },
       },
@@ -55,17 +56,44 @@ export const addMessage = async (req, res) => {
     });
 
     // Mark as unread for other participants
+    const others = await prisma.chatParticipant.findMany({
+      where: { chatId, userId: { not: tokenUserId } },
+      select: { userId: true },
+    });
+
     await prisma.chatParticipant.updateMany({
       where: {
         chatId: chatId,
-        userId: {
-          not: tokenUserId,
-        },
+        userId: { not: tokenUserId },
       },
-      data: {
-        hasSeen: false,
-      },
+      data: { hasSeen: false },
     });
+
+    if (others.length) {
+      const preview = text.length > 120 ? `${text.slice(0, 120)}…` : text;
+      await prisma.notification.createMany({
+        data: others.map(({ userId }) => ({
+          userId,
+          title: "New message",
+          message: preview,
+          type: "CHAT",
+          link: "/chat",
+        })),
+      });
+      const io = req.app.get("io");
+      if (io?.emitToUser) {
+        others.forEach(({ userId }) => {
+          io.emitToUser(userId, "newNotification", {
+            title: "New message",
+            message: preview,
+            type: "CHAT",
+            link: "/chat",
+            createdAt: new Date().toISOString(),
+            isRead: false,
+          });
+        });
+      }
+    }
 
     res.status(200).json(message);
   } catch (err) {

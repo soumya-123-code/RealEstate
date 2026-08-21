@@ -49,17 +49,17 @@ function Avatar({ user, size = 40, online }) {
 }
 
 // ── New-chat modal ───────────────────────────────────────────────────────────
-function NewChatModal({ onClose, onSelect }) {
+function NewChatModal({ onClose, onSelect, excludeUserId }) {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     apiRequest.get('/users')
-      .then(r => setUsers(Array.isArray(r.data) ? r.data : []))
+      .then(r => setUsers((Array.isArray(r.data) ? r.data : []).filter(u => u.isActive !== false && Number(u.id) !== Number(excludeUserId))))
       .catch(() => toast.error('Failed to load users'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [excludeUserId]);
 
   const filtered = users.filter(u =>
     u.username?.toLowerCase().includes(search.toLowerCase()) ||
@@ -246,7 +246,7 @@ export default function AdminChat() {
       if (cur && Number(cur.id) === inChatId) {
         // Append to open conversation — dedupe by id (socket echo vs saved row)
         setMessages(prev => {
-          if (data.id != null && prev.some(m => m.id === data.id)) return prev;
+          if (data.id != null && prev.some(m => Number(m.id) === Number(data.id))) return prev;
           return [...prev, {
             id       : data.id ?? `sock_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
             text     : data.text,
@@ -440,7 +440,7 @@ export default function AdminChat() {
       {callState.status === 'in-call' && <AdminCallUI callState={callState} onEnd={endCall} localStreamRef={localStreamRef} toggleMute={toggleMute} toggleCamera={toggleCamera} />}
 
       {showNewChat && (
-        <NewChatModal onClose={() => setShowNewChat(false)} onSelect={startChat} />
+        <NewChatModal onClose={() => setShowNewChat(false)} onSelect={startChat} excludeUserId={currentUser?.id} />
       )}
 
       <div className={`ac-root ${mobileChatOpen ? 'ac-root--chat' : ''}`}>

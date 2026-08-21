@@ -123,6 +123,8 @@ const supportRecipients = async (conversationId, actorId) => {
 
 io.on("connection", (socket) => {
   console.log("[Socket] Connected:", socket.id);
+  addUser(socket.userId, socket.id, socket.userRole);
+  io.emit("getOnlineUsers", getOnlineUserIds());
 
   socket.on("newUser", () => {
     addUser(socket.userId, socket.id, socket.userRole);

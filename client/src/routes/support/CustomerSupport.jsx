@@ -27,7 +27,7 @@ export default function CustomerSupport() {
     setLoadingMessages(true); setMobileList(false); setNewConversation(false); setSelectedFile(null);
     try {
       const res = await apiRequest.get(`/support/chat/conversations/${conversation.id}`);
-      setActive(res.data); setMessages(res.data.messages || []); setHasMore(true); setSearchParams({ conversation: String(conversation.id) });
+      setActive(res.data); setMessages(res.data.messages || []); setHasMore((res.data.messages || []).length >= PAGE_SIZE); setSearchParams({ conversation: String(conversation.id) });
       await apiRequest.put(`/support/chat/conversations/${conversation.id}/read`);
       setConversations((prev) => prev.map((c) => c.id === conversation.id ? { ...c, unreadCount: 0, customerUnreadCount: 0 } : c));
       requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }));
@@ -48,9 +48,11 @@ export default function CustomerSupport() {
   useEffect(() => {
     if (!socket) return;
     const onMessage = ({ conversationId, message }) => {
-      const id = Number(conversationId); if (message?.senderId === Number(currentUser?.id)) return;
-      setConversations((prev) => prev.map((c) => c.id === id ? { ...c, lastMessageText: message.text || "Attachment", lastMessageAt: message.createdAt, unreadCount: activeRef.current?.id === id ? 0 : Number(c.unreadCount || 0) + 1, customerUnreadCount: activeRef.current?.id === id ? 0 : Number(c.customerUnreadCount || 0) + 1, updatedAt: message.createdAt } : c));
-      if (activeRef.current?.id === id) { setMessages((prev) => prev.some((m) => m.id === message.id) ? prev : [...prev, message]); apiRequest.post(`/support/chat/conversations/${id}/messages/${message.id}/read`).catch(() => {}); requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })); }
+      const id = Number(conversationId);
+      const isOwn = Number(message?.senderId) === Number(currentUser?.id);
+      const isActive = Number(activeRef.current?.id) === id;
+      setConversations((prev) => prev.map((c) => Number(c.id) === id ? { ...c, lastMessageText: message.text || "Attachment", lastMessageAt: message.createdAt, unreadCount: isOwn || isActive ? 0 : Number(c.unreadCount || 0) + 1, customerUnreadCount: isOwn || isActive ? Number(c.customerUnreadCount || 0) : Number(c.customerUnreadCount || 0) + 1, updatedAt: message.createdAt } : c));
+      if (isActive) { setMessages((prev) => prev.some((m) => Number(m.id) === Number(message.id)) ? prev : [...prev, message]); if (!isOwn) apiRequest.post(`/support/chat/conversations/${id}/messages/${message.id}/read`).catch(() => {}); requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })); }
     };
     const onTyping = ({ conversationId, userId, isTyping }) => { if (activeRef.current?.id === Number(conversationId) && Number(userId) !== Number(currentUser?.id)) setTyping(Boolean(isTyping)); };
     const onUpdated = ({ conversationId, status, assignedToId }) => { setConversations((prev) => prev.map((c) => c.id === Number(conversationId) ? { ...c, status: status || c.status, assignedToId: assignedToId ?? c.assignedToId } : c)); if (activeRef.current?.id === Number(conversationId)) setActive((prev) => prev ? { ...prev, status: status || prev.status, assignedToId: assignedToId ?? prev.assignedToId } : prev); };
@@ -75,7 +77,7 @@ export default function CustomerSupport() {
         setActive(conversation); setNewConversation(false); setSearchParams({ conversation: String(conversation.id) }); setMessages(conversation.messages || []); setText(""); setSubject(""); await loadConversations(); requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })); return;
       }
       let attachment = null;
-      if (selectedFile) { const form = new FormData(); form.append("file", selectedFile); const upload = await apiRequest.post(`/support/chat/conversations/${conversation.id}/attachments`, form, { headers: { "Content-Type": "multipart/form-data" } }); attachment = upload.data; }
+      if (selectedFile) { const form = new FormData(); form.append("file", selectedFile); const upload = await apiRequest.post(`/support/chat/conversations/${conversation.id}/messages/upload`, form, { headers: { "Content-Type": "multipart/form-data" } }); attachment = upload.data; }
       const optimistic = { id: `tmp-${Date.now()}`, conversationId: conversation.id, senderId: currentUser.id, text: clean, attachments: attachment ? [attachment] : [], createdAt: new Date().toISOString(), _pending: true };
       setMessages((prev) => [...prev, optimistic]); setText(""); setSelectedFile(null); emitTyping(false);
       const res = await apiRequest.post(`/support/chat/conversations/${conversation.id}/messages`, { text: clean, attachments: attachment ? [attachment] : [] });

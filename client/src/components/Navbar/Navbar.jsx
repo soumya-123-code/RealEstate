@@ -149,6 +149,7 @@ function Navbar() {
       { to: '/list', label: 'Properties', icon: FiList },
       { to: '/bookings', label: 'My Bookings', icon: FiCalendar },
       { to: '/chat', label: 'Chat', icon: FiMessageCircle, badge: totalUnread },
+      { to: '/support', label: 'Support', icon: FiHelpCircle },
       { to: '/profile', label: 'Profile', icon: FiUser },
     ];
   };

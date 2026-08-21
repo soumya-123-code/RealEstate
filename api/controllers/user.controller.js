@@ -4,21 +4,24 @@ import bcrypt from "bcrypt";
 // Authenticated endpoint to get admin contact card for chat (no email/phone leakage)
 export const getAdminUser = async (req, res) => {
   try {
-    const admin = await prisma.user.findFirst({
-      where: { role: "ADMIN", isActive: true },
+    const contacts = await prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "STAFF"] }, isActive: true },
       select: {
         id: true,
         username: true,
+        email: true,
         avatar: true,
         role: true,
       },
+      orderBy: [{ role: "asc" }, { username: "asc" }],
     });
 
+    const admin = contacts.find((u) => u.role === "ADMIN") || contacts[0];
     if (!admin) {
       return res.status(404).json({ message: "Admin user not found" });
     }
 
-    res.status(200).json(admin);
+    res.status(200).json({ ...admin, contacts });
   } catch (err) {
     console.error("[ERROR] getAdminUser failed:", err);
     res.status(500).json({ message: "Failed to get admin user" });
@@ -28,7 +31,7 @@ export const getAdminUser = async (req, res) => {
 export const getUsers = async (req, res) => {
   try {
     console.log("[DEBUG] getUsers called");
-    const { role, exclude, q } = req.query;
+    const { role, exclude, q, search } = req.query;
     const where = {};
     if (role && role !== 'all') {
       where.role = role;
@@ -36,10 +39,10 @@ export const getUsers = async (req, res) => {
     if (exclude) {
       where.id = { not: parseInt(exclude) };
     }
-    // Free-text search for the admin panel search bar
-    if (q && typeof q === 'string' && q.trim()) {
+    const query = (typeof q === 'string' && q.trim()) || (typeof search === 'string' && search.trim()) || '';
+    if (query) {
       where.OR = ['username', 'email', 'phone'].map((field) => ({
-        [field]: { contains: q.trim() },
+        [field]: { contains: query },
       }));
     }
     const users = await prisma.user.findMany({

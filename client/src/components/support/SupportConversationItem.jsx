@@ -9,9 +9,11 @@ import { format } from 'timeago.js';
 import './SupportConversationItem.scss';
 
 const STATUS_COLORS = {
+  OPEN: '#16a34a',
   ACTIVE: '#16a34a',
   PENDING: '#f59e0b',
   RESOLVED: '#64748b',
+  CLOSED: '#94a3b8',
   ARCHIVED: '#94a3b8',
 };
 
