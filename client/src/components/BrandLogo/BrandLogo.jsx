@@ -1,13 +1,16 @@
 import { Link } from 'react-router-dom';
+import { mediaUrl } from '../../lib/utils';
 import './BrandLogo.scss';
 
 /**
- * Suretreaven — previous S + new t-home (crossbar becomes house roof).
+ * Suretreaven mark. Uses the uploaded company logo when present,
+ * otherwise the built-in S + t-home SVG.
  */
 function BrandLogo({
   to = '/',
   name = 'Suretreaven',
   tagline = 'Find · Book · Build · Belong',
+  logo,
   size = 'md',
   inverted = false,
   onClick,
@@ -17,16 +20,20 @@ function BrandLogo({
   const isSure = displayName.replace(/\s/g, '').startsWith('SURE');
   const nameLead = isSure ? 'SURE' : displayName.slice(0, Math.ceil(displayName.length / 2));
   const nameTail = isSure ? (displayName.slice(4) || 'TREAVEN') : displayName.slice(Math.ceil(displayName.length / 2));
+  const logoSrc = logo ? mediaUrl(logo) : '';
 
   return (
     <Link
       to={to}
-      className={`brand-logo brand-logo--${size}${inverted ? ' brand-logo--inverted' : ''} ${className}`.trim()}
+      className={`brand-logo brand-logo--${size}${inverted ? ' brand-logo--inverted' : ''}${logoSrc ? ' brand-logo--image' : ''} ${className}`.trim()}
       onClick={onClick}
       aria-label={`${name || 'Suretreaven'} home`}
     >
       <span className="brand-logo__mark" aria-hidden="true">
-        <svg viewBox="0 0 100 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {logoSrc ? (
+          <img src={logoSrc} alt="" />
+        ) : (
+          <svg viewBox="0 0 100 72" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* Navy S (kept from previous) */}
           <path
             className="brand-logo__s"
@@ -74,6 +81,7 @@ function BrandLogo({
             <path d="M75.5 33 V45 M69 39 H82" strokeWidth="1.5" />
           </g>
         </svg>
+        )}
       </span>
 
       <span className="brand-logo__divider" aria-hidden="true" />

@@ -319,6 +319,7 @@ function AdminLayout() {
           <BrandLogo
             to="/admin"
             name={companySettings?.companyName || 'Suretreaven'}
+            logo={companySettings?.companyLogo}
             tagline="Admin"
             size="sm"
             inverted

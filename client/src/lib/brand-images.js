@@ -7,3 +7,16 @@ export const BRAND_IMAGES = {
 };
 
 export const PLACEHOLDER_PROPERTY = '/properties/prop1.jpg';
+
+export const CARD_ART_STRIPS = [
+  '/brand/card-art/saura-card-01.png',
+  '/brand/card-art/saura-card-02.png',
+  '/brand/card-art/saura-card-03.png',
+  '/brand/card-art/saura-card-04.png',
+];
+
+export const cardArtFor = (id) => {
+  const key = String(id ?? '');
+  const n = key.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  return CARD_ART_STRIPS[n % CARD_ART_STRIPS.length];
+};

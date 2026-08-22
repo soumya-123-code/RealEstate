@@ -21,12 +21,10 @@ export const DEFAULT_HEADER_NAV = [
 export const DEFAULT_FOOTER_NAV = [
   { id: 'f1', location: 'FOOTER', label: 'Home', url: '/' },
   { id: 'f2', location: 'FOOTER', label: 'Properties', url: '/list' },
-  { id: 'f3', location: 'FOOTER', label: 'About Us', url: '/about' },
-  { id: 'f4', location: 'FOOTER', label: 'Contact Us', url: '/contact' },
+  { id: 'f3', location: 'FOOTER', label: 'Projects', url: '/explore' },
+  { id: 'f4', location: 'FOOTER', label: 'About Us', url: '/about' },
   { id: 'f5', location: 'FOOTER', label: 'Blog', url: '/blog' },
-  { id: 'f6', location: 'FOOTER', label: 'FAQ', url: '/faq' },
-  { id: 'f7', location: 'FOOTER', label: 'Privacy Policy', url: '/privacy' },
-  { id: 'f8', location: 'FOOTER', label: 'Terms & Conditions', url: '/terms' },
+  { id: 'f6', location: 'FOOTER', label: 'Contact Us', url: '/contact' },
 ];
 
 const SiteContext = createContext(null);

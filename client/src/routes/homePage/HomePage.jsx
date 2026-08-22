@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import apiRequest from '../../lib/apiRequest';
 import Card from '../../components/Card/Card';
 import { PropertyListSkeleton } from '../../components/Skeleton/Skeleton';
@@ -22,47 +23,21 @@ import {
   FiGlobe,
   FiPhone,
   FiPlay,
-  FiSearch,
+  FiHome,
+  FiX,
+  FiUsers,
+  FiMonitor,
+  FiFileText,
 } from 'react-icons/fi';
 import { BRAND_IMAGES } from '../../lib/brand-images';
 import './HomePage.scss';
 
-// Animated counter — module-level component so hooks are not created inside a callback
-function AnimatedCounter({ value, suffix = '+' }) {
-  const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let start = 0;
-          const end = parseInt(value) || 0;
-          if (end === 0) return;
-          const duration = 2000;
-          const increment = end / (duration / 16);
-          const timer = setInterval(() => {
-            start += increment;
-            if (start >= end) {
-              setCount(end);
-              clearInterval(timer);
-            } else {
-              setCount(Math.floor(start));
-            }
-          }, 16);
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [value, hasAnimated]);
-
-  return <span ref={ref}>{count}{suffix}</span>;
-}
+const HERO_FEATURES = [
+  { title: 'Thoughtful Design', description: 'Homes crafted with care and precision.', icon: <FiHome /> },
+  { title: 'Prime Locations', description: 'Well-connected and future-ready.', icon: <FiMapPin /> },
+  { title: 'Sustainable Living', description: 'Eco-friendly homes for a better tomorrow.', icon: <FiGlobe /> },
+  { title: 'Trusted Quality', description: 'Built on integrity, delivered with pride.', icon: <FiShield /> },
+];
 
 /**
  * Section renderer registry. Order and visibility come from the CMS page
@@ -75,47 +50,54 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [activeBanner, setActiveBanner] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const statsRef = useRef(null);
+  const [videoOpen, setVideoOpen] = useState(false);
   const bannerIntervalRef = useRef(null);
 
-  // Default fallback data — used only when the CMS has no content yet
   const defaultBanners = [
     {
-      title: "Find a place you'll be proud to call home.",
-      subtitle: 'Premium verified plots, homes, and commercial spaces across Odisha — guided by Suretreaven with clarity and care.',
+      title: 'Rooted in Odisha.',
+      subtitle: 'Thoughtfully designed homes inspired by nature, culture and the timeless spirit of Odisha.',
       image: BRAND_IMAGES.hero,
       buttonText: 'Explore Properties',
       buttonLink: '/list',
-      badge: 'Trusted Real Estate',
-    }
+    },
   ];
 
   const defaultFeatures = [
-    { icon: 'shield', title: 'Verified Properties', description: 'All properties are thoroughly verified and authenticated by our expert legal team' },
-    { icon: 'dollar', title: 'Best Prices', description: 'Get the most competitive prices in the market with complete transparency' },
-    { icon: 'headphones', title: 'Expert Support', description: '24/7 customer support to help you with all your property queries and concerns' },
-    { icon: 'zap', title: 'Quick Process', description: 'Fast and hassle-free booking process with instant confirmation and documentation' }
+    { icon: 'map', title: 'Local Expertise', description: 'Deep knowledge of Odisha’s real estate market to help you find the right property.' },
+    { icon: 'shield', title: 'Trusted & Verified', description: 'Every property is verified for authenticity, legal compliance and peace of mind.' },
+    { icon: 'users', title: 'Personalized Service', description: 'Dedicated support tailored to your needs at every step.' },
+    { icon: 'monitor', title: 'Smart Technology', description: 'Advanced tools and real-time updates for a faster, easier search.' },
+    { icon: 'file', title: 'Transparent Process', description: 'Clear communication and honest documentation, always.' },
+    { icon: 'headphones', title: 'After-Sales Support', description: 'We stay with you even after you buy for any support you need.' },
   ];
 
   // Get icon component from string name
   const getFeatureIcon = (iconName) => {
     const icons = {
-      shield: <FiShield size={28} />,
-      dollar: <FiDollarSign size={28} />,
-      headphones: <FiHeadphones size={28} />,
-      zap: <FiZap size={28} />,
-      map: <FiMapPin size={28} />,
-      star: <FiStar size={28} />,
-      user: <FiUser size={28} />,
-      globe: <FiGlobe size={28} />,
-      phone: <FiPhone size={28} />,
-      play: <FiPlay size={28} />,
-      FiShield: <FiShield size={28} />,
-      FiDollarSign: <FiDollarSign size={28} />,
-      FiHeadphones: <FiHeadphones size={28} />,
-      FiZap: <FiZap size={28} />,
+      shield: <FiShield size={22} />,
+      dollar: <FiDollarSign size={22} />,
+      headphones: <FiHeadphones size={22} />,
+      zap: <FiZap size={22} />,
+      map: <FiMapPin size={22} />,
+      star: <FiStar size={22} />,
+      user: <FiUser size={22} />,
+      users: <FiUsers size={22} />,
+      globe: <FiGlobe size={22} />,
+      phone: <FiPhone size={22} />,
+      play: <FiPlay size={22} />,
+      monitor: <FiMonitor size={22} />,
+      file: <FiFileText size={22} />,
+      FiShield: <FiShield size={22} />,
+      FiDollarSign: <FiDollarSign size={22} />,
+      FiHeadphones: <FiHeadphones size={22} />,
+      FiZap: <FiZap size={22} />,
+      FiUsers: <FiUsers size={22} />,
+      FiMonitor: <FiMonitor size={22} />,
+      FiFileText: <FiFileText size={22} />,
+      FiMapPin: <FiMapPin size={22} />,
     };
-    return icons[iconName] || <FiZap size={28} />;
+    return icons[iconName] || <FiStar size={22} />;
   };
 
   // Fetch homepage data (content + section composition) from CMS API
@@ -137,28 +119,32 @@ function HomePage() {
     fetchHomeData();
   }, []);
 
-  // Auto-rotate banner
+  const banners = homeData?.banners?.length ? homeData.banners : defaultBanners;
+
   useEffect(() => {
-    const banners = homeData?.banners || defaultBanners;
     if (banners.length <= 1) return;
 
-    if (bannerIntervalRef.current) {
-      clearInterval(bannerIntervalRef.current);
-    }
-
+    if (bannerIntervalRef.current) clearInterval(bannerIntervalRef.current);
     bannerIntervalRef.current = setInterval(() => {
-      setActiveBanner(prev => (prev + 1) % banners.length);
+      setActiveBanner((prev) => (prev + 1) % banners.length);
     }, 5000);
 
     return () => {
-      if (bannerIntervalRef.current) {
-        clearInterval(bannerIntervalRef.current);
-      }
+      if (bannerIntervalRef.current) clearInterval(bannerIntervalRef.current);
     };
-  }, [homeData?.banners]);
-
-  const banners = homeData?.banners || defaultBanners;
-  const services = homeData?.services || defaultFeatures;
+  }, [banners.length]);
+  const cmsServices = homeData?.services || [];
+  const services = defaultFeatures.map((item, index) => {
+    const cms = cmsServices[index];
+    if (!cms) return item;
+    return {
+      ...item,
+      id: cms.id,
+      title: cms.title || item.title,
+      description: cms.description || item.description,
+      icon: cms.icon || item.icon,
+    };
+  });
   const testimonials = homeData?.testimonials || [];
   const featuredProperties = homeData?.featuredProperties || [];
   const blogPosts = homeData?.blogPosts || [];
@@ -172,8 +158,6 @@ function HomePage() {
    */
   const FALLBACK_SECTIONS = [
     { key: 'hero', type: 'HERO' },
-    { key: 'search', type: 'SEARCH' },
-    { key: 'stats', type: 'STATS' },
     { key: 'featured', type: 'FEATURED_PROPERTIES' },
     { key: 'services', type: 'SERVICES' },
     { key: 'cities', type: 'CUSTOM' },
@@ -208,208 +192,138 @@ function HomePage() {
 
   // ============ SECTION RENDERERS ============
 
-  const renderHero = (section, ctx) => (
-    <section className="hero-section" aria-label="Featured properties" key="hero">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeBanner}
-          className="hero-slide"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.7 }}
-        >
-          {banners[activeBanner]?.image ? (
-            <div
-              className="hero-bg-image"
-              style={{
-                backgroundImage: `url(${mediaUrl(banners[activeBanner].image)})`,
-              }}
-            />
-          ) : (
-            <div className="hero-bg-gradient" />
-          )}
-        </motion.div>
-      </AnimatePresence>
-      <div className="hero-overlay" aria-hidden="true" />
-
-      <div className="hero-content">
-        <motion.p
-          className="hero-brand"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-        >
-          {companyName}
-        </motion.p>
-
-        <motion.h1
-          key={`title-${activeBanner}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-        >
-          {banners[activeBanner]?.title || sectionValue(section, 'title', "Find a place you'll be proud to call home.")}
-        </motion.h1>
-
-        <motion.p
-          key={`subtitle-${activeBanner}`}
-          className="hero-subtitle"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          {banners[activeBanner]?.subtitle || sectionValue(section, 'subtitle', 'Explore premium verified properties across Odisha')}
-        </motion.p>
-
-        <motion.div
-          className="hero-buttons"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <Link
-            to={sanitizeAppPath(banners[activeBanner]?.buttonLink, '/list')}
-            className="hero-btn primary"
-          >
-            {banners[activeBanner]?.buttonText || 'Explore Properties'} <FiArrowRight />
-          </Link>
-          <Link to="/explore" className="hero-btn secondary">
-            <FiMapPin /> Map View
-          </Link>
-          <Link to="/contact" className="hero-btn ghost">
-            Contact Us
-          </Link>
-        </motion.div>
-
-        {ctx.searchEnabled && (
-          <motion.form
-            className="hero-search"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              const city = String(fd.get('city') || '').trim();
-              const propertyType = String(fd.get('propertyType') || '');
-              const params = new URLSearchParams();
-              if (city) params.set('city', city);
-              if (propertyType && propertyType !== 'ALL') params.set('propertyType', propertyType);
-              const qs = params.toString();
-              navigate(qs ? `/list?${qs}` : '/list');
-            }}
-          >
-            <label className="hero-search__field">
-              <span>City</span>
-              <input name="city" type="search" placeholder="Rourkela, Bhubaneswar…" autoComplete="address-level2" />
-            </label>
-            <label className="hero-search__field">
-              <span>Type</span>
-              <select name="propertyType" defaultValue="ALL">
-                <option value="ALL">All types</option>
-                <option value="PLOT">Plot</option>
-                <option value="APARTMENT">Apartment</option>
-                <option value="HOUSE">House</option>
-                <option value="VILLA">Villa</option>
-                <option value="COMMERCIAL">Commercial</option>
-              </select>
-            </label>
-            <button type="submit" className="hero-search__submit">
-              <FiSearch /> Search
-            </button>
-          </motion.form>
-        )}
-
-        {banners.length > 1 && (
-          <div className="hero-indicators" role="tablist" aria-label="Hero slides">
-            {banners.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                role="tab"
-                aria-selected={activeBanner === index}
-                aria-label={`Show slide ${index + 1}`}
-                className={`indicator ${activeBanner === index ? 'active' : ''}`}
-                onClick={() => setActiveBanner(index)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-
-  const renderStats = () => {
-    const companyInfo = homeData?.companyInfo;
-    const apiStats = homeData?.stats;
-
-    let stats;
-    if (companyInfo && (companyInfo.statsProperties > 0 || companyInfo.statsYears > 0)) {
-      stats = [
-        { value: companyInfo.statsProperties || apiStats?.totalProperties || 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
-        { value: companyInfo.statsCustomers || 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
-        { value: companyInfo.statsCities || apiStats?.totalCities || 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
-        { value: companyInfo.statsYears || 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
-      ];
-    } else if (apiStats) {
-      stats = [
-        { value: apiStats.totalProperties || 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
-        { value: apiStats.totalBookings || 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
-        { value: apiStats.totalCities || 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
-        { value: 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
-      ];
-    } else {
-      stats = [
-        { value: 350, label: 'Properties Listed', icon: <FiZap size={28} /> },
-        { value: 1200, label: 'Happy Customers', icon: <FiStar size={28} /> },
-        { value: 6, label: 'Cities Covered', icon: <FiMapPin size={28} /> },
-        { value: 12, label: 'Years Experience', icon: <FiCalendar size={28} /> },
-      ];
-    }
+  const renderHero = () => {
+    const slide = banners[activeBanner] || banners[0];
+    const slideImage = slide?.image ? mediaUrl(slide.image) : BRAND_IMAGES.hero;
 
     return (
-      <section className="stats-section" ref={statsRef} key="stats">
-        <div className="container">
-          <div className="stats-grid">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                className="stat-card"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-              >
-                <div className="stat-icon">{stat.icon}</div>
-                <div className="stat-number">
-                  <AnimatedCounter value={stat.value} />
-                </div>
-                <div className="stat-label">{stat.label}</div>
-              </motion.div>
-            ))}
+    <section className="hero-section" aria-label="Rooted in Odisha" key="hero">
+      <div className="hero-visual" aria-hidden="true">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={slideImage || activeBanner}
+            className="hero-slide"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7 }}
+          >
+            <div
+              className="hero-bg-image"
+              style={{ backgroundImage: `url(${slideImage})` }}
+            />
+          </motion.div>
+        </AnimatePresence>
+        <div className="hero-chakra" />
+        <div className="hero-frieze" />
+        <div className="hero-overlay" />
+      </div>
+
+      <div className="hero-inner">
+        <motion.div
+          className="hero-copy"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55 }}
+        >
+          <p className="hero-kicker">Modern Living Spaces.</p>
+          <h1>Rooted in Odisha.</h1>
+          <p className="hero-subtitle">
+            Thoughtfully designed homes inspired by nature, culture and the timeless spirit of Odisha. Premium properties. Trusted legacy.
+          </p>
+          <div className="hero-buttons">
+            <Link to="/list" className="hero-btn primary">
+              Explore Properties <FiArrowRight />
+            </Link>
+            <button type="button" className="hero-btn watch" onClick={() => setVideoOpen(true)}>
+              <span className="hero-btn__play" aria-hidden="true"><FiPlay /></span>
+              Watch Video
+            </button>
           </div>
+        </motion.div>
+      </div>
+
+      {banners.length > 1 && (
+        <div className="hero-indicators" role="tablist" aria-label="Hero slides">
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              role="tab"
+              aria-selected={activeBanner === index}
+              aria-label={`Show slide ${index + 1}`}
+              className={`indicator ${activeBanner === index ? 'active' : ''}`}
+              onClick={() => setActiveBanner(index)}
+            />
+          ))}
         </div>
-      </section>
+      )}
+
+      <div className="hero-features">
+        {HERO_FEATURES.map((item) => (
+          <div className="hero-feature" key={item.title}>
+            <span className="hero-feature__icon" aria-hidden="true">{item.icon}</span>
+            <div>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {videoOpen && createPortal(
+        <div className="hero-video-modal" role="dialog" aria-modal="true" aria-label="Watch video">
+          <button type="button" className="hero-video-modal__backdrop" onClick={() => setVideoOpen(false)} aria-label="Close video" />
+          <div className="hero-video-modal__panel">
+            <button type="button" className="hero-video-modal__close" onClick={() => setVideoOpen(false)} aria-label="Close">
+              <FiX size={22} />
+            </button>
+            <video src="/hero.mp4" controls autoPlay playsInline />
+          </div>
+        </div>,
+        document.body
+      )}
+    </section>
     );
   };
 
   const renderFeatured = (section) => {
     if (!featuredProperties.length) return null;
-    const limit = Number(section?.config?.count) || 6;
+    const limit = Number(section?.config?.count) || 4;
 
     return (
       <section className="featured-section" key="featured">
+        <div className="featured-deco featured-deco--mandala" aria-hidden="true" />
+        <img
+          className="featured-deco featured-deco--folk"
+          src="/brand/title-warli.png?v=2"
+          alt=""
+        />
+        <img className="featured-deco featured-deco--leaves" src="/brand/deco-leaves.png" alt="" />
         <div className="container">
           <motion.div
-            className="section-header"
+            className="featured-heading-row"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2>{sectionValue(section, 'title', 'Featured Properties')}</h2>
-            <p>{sectionValue(section, 'subtitle', 'Handpicked properties in prime locations across Odisha')}</p>
+            <div className="section-header featured-header">
+              <p className="featured-kicker">
+                <span>◆</span> Featured Properties <span>◆</span>
+              </p>
+              <h2>
+                <span className="featured-title-lead">Our Featured</span>{' '}
+                Properties
+              </h2>
+              <p>
+                {sectionValue(
+                  section,
+                  'subtitle',
+                  'Handpicked premium properties that blend modern living with Odisha’s natural beauty and culture.'
+                )}
+              </p>
+            </div>
           </motion.div>
 
           <div className="featured-grid">
@@ -419,7 +333,7 @@ function HomePage() {
           </div>
 
           <div className="section-cta">
-            <Link to="/list" className="cta-btn">
+            <Link to="/list" className="cta-btn featured-cta">
               View All Properties <FiArrowRight />
             </Link>
           </div>
@@ -428,22 +342,43 @@ function HomePage() {
     );
   };
 
-  const renderServices = (section) => (
-    <section className="features-section" key="services">
+  const renderServices = (section) => {
+    const whyTitle = sectionValue(section, 'title', 'Why Choose Us');
+    const whyWords = String(whyTitle).trim().split(/\s+/);
+    const whyLead = whyWords[0] || 'Why';
+    const whyRest = whyWords.slice(1).join(' ') || 'Choose Us';
+
+    return (
+    <section className="why-section" key="services">
+      <div className="why-deco" aria-hidden="true">
+        <img className="why-deco__art" src="/brand/why-left.png" alt="" />
+      </div>
       <div className="container">
         <motion.div
-          className="section-header"
+          className="why-header"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2>{sectionValue(section, 'title', `Why Choose ${companyName}`)}</h2>
-          <p>{sectionValue(section, 'subtitle', `Your trusted real estate partner in Odisha since ${homeData?.companyInfo?.foundedYear || 2014}`)}</p>
+          <p className="why-kicker">
+            <span>◆</span> Why Choose Us <span>◆</span>
+          </p>
+          <h2>
+            <span className="why-title-lead">{whyLead}</span> {whyRest}
+          </h2>
+          <span className="why-divider" aria-hidden="true" />
+          <p>
+            {sectionValue(
+              section,
+              'subtitle',
+              'We combine local expertise with trusted service and modern technology to deliver the best property experience.'
+            )}
+          </p>
         </motion.div>
 
         <motion.div
-          className="features-grid"
+          className="why-grid"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -452,21 +387,24 @@ function HomePage() {
           {services.map((service, index) => (
             <motion.div
               key={service.id || index}
-              className="feature-card"
+              className="why-card"
               variants={itemVariants}
-              whileHover={{ y: -8, transition: { duration: 0.3 } }}
+              whileHover={{ y: -6, transition: { duration: 0.3 } }}
             >
-              <div className="feature-icon-wrapper">
-                {service.icon ? getFeatureIcon(service.icon) : <FiZap size={28} />}
+              <div className="why-card__icon">
+                {service.icon ? getFeatureIcon(service.icon) : <FiStar size={22} />}
               </div>
-              <h3>{service.title}</h3>
-              <p>{service.description}</p>
+              <div className="why-card__body">
+                <h3>{service.title}</h3>
+                <p>{service.description}</p>
+              </div>
             </motion.div>
           ))}
         </motion.div>
       </div>
     </section>
-  );
+    );
+  };
 
   const renderCities = (section) => {
     if (!cityStats.length) return null;
@@ -763,18 +701,14 @@ function HomePage() {
     );
   };
 
-  // The hero search bar is visible only when a SEARCH section is active.
-  const searchEnabled = sections.some((s) => s.type === 'SEARCH');
-  const ctx = { searchEnabled };
-
   const renderSection = (section) => {
     // The 'cities' CUSTOM section keeps its dedicated renderer
     if (section.type === 'CUSTOM' && section.key === 'cities') return renderCities(section);
 
     switch (section.type) {
-      case 'HERO': return renderHero(section, ctx);
-      case 'SEARCH': return null; // rendered inside the hero block
-      case 'STATS': return renderStats();
+      case 'HERO': return renderHero();
+      case 'SEARCH': return null;
+      case 'STATS': return null;
       case 'FEATURED_PROPERTIES': return renderFeatured(section);
       case 'SERVICES': return renderServices(section);
       case 'TESTIMONIALS': return renderTestimonials(section);

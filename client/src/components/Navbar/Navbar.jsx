@@ -102,6 +102,8 @@ function Navbar() {
   };
 
   const closeMenu = () => setMenuOpen(false);
+  const isHome = location.pathname === '/';
+  const overlayNav = isHome && !scrolled;
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
@@ -161,10 +163,14 @@ function Navbar() {
       : publicLinks;
 
   return (
-    <nav className={`navbar${scrolled ? ' scrolled' : ''}`} aria-label="Main">
+    <nav
+      className={`navbar${scrolled ? ' scrolled' : ''}${isHome ? ' navbar--home' : ''}${overlayNav ? ' navbar--transparent' : ''}`}
+      aria-label="Main"
+    >
       <div className="navbar-container">
         <BrandLogo
           name={companyName}
+          logo={companySettings?.companyLogo}
           tagline="Find · Book · Build · Belong"
           onClick={closeMenu}
         />
@@ -285,6 +291,7 @@ function Navbar() {
             <div className="mobile-menu-header">
               <BrandLogo
                 name={companyName}
+                logo={companySettings?.companyLogo}
                 tagline="Find · Book · Build · Belong"
                 inverted
                 onClick={closeMenu}
